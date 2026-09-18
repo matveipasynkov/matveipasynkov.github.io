@@ -77,3 +77,14 @@
 .award-star{width:1em;height:1em}
 .skill-symbol{display:inline-flex}
 @media(max-width:480px){.display-star{font-size:.58em;vertical-align:4%}.hero-display{letter-spacing:-.065em}.hero-summary{line-height:1.75}}
+
+/* Overscan hides the rotated edges; two equal halves hide the text seam. */
+.ribbon-viewport{overflow:hidden;overflow:clip;padding-block:max(12px,1.5vw);margin-block:16px 10px}
+.ribbon-viewport .ribbon{width:110%;margin:0 0 0 -5%}
+.ribbon .ribbon-track{display:flex;gap:0;width:max-content;animation:ribbon-loop var(--ribbon-duration,70s) linear infinite}
+.ribbon-group{display:flex;flex:none;min-width:110vw;justify-content:space-around}
+.ribbon-unit{display:flex;flex:none;align-items:center;gap:38px;padding-right:38px}
+.ribbon-unit .ribbon-label{font-size:17px;line-height:1.6;white-space:nowrap}
+@keyframes ribbon-loop{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(max-width:780px){.ribbon-unit{gap:24px;padding-right:24px}.ribbon-unit .ribbon-label{font-size:14px}}
+@media print{.ribbon-viewport{display:none}}
