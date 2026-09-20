@@ -18,7 +18,7 @@
    el.style.opacity=opacity[i];el.style.visibility=opacity[i]<.002?'hidden':'visible';
    el.style.transform=`translate3d(${leave*-7}%,${(1-enter)*45}px,0) scale(${1+(1-enter)*.08-leave*.12})`;
   });
-  nodes.forEach((el,i)=>{const q=smooth((p-.34-i*.055)/.09);el.style.opacity=.2+.8*q;el.style.transform=`translateY(${(1-q)*18}px)`});
+  nodes.forEach((el,i)=>{const q=smooth((p-.34-i*.055)/.09);el.style.opacity=.2+.8*q;el.style.transform=`translateX(${(1-q)*12}px)`});
   track.style.transform=`scaleX(${p})`;
   scan.style.transform=`translateX(${p*110-5}%)`;
   const label=p<.29?'01 / 03':p<.69?'02 / 03':'03 / 03';if(counter.textContent!==label)counter.textContent=label;

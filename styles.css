@@ -215,3 +215,50 @@
 .webgl-ready .toolkit{background:#1b1d1826}
 .webgl-ready .contact{background:linear-gradient(120deg,#1a1d1540,#11121040)}
 .webgl-ready .hero-summary{background:transparent;text-shadow:0 1px 3px var(--bg),0 0 12px var(--bg)}
+
+/* Room to travel through the object, examine its structure, and return outside. */
+.webgl-ready.cinema-ready[data-motion="on"] .scroll-film{height:440svh}
+.webgl-ready .film-shot{justify-content:flex-end;padding-bottom:105px}
+.webgl-ready .film-shot h2{font-size:clamp(38px,6vw,88px);margin-block:14px}
+.webgl-ready .film-shot p{text-shadow:0 1px 5px #111210,0 0 16px #111210}
+@media(max-width:780px){.webgl-ready.cinema-ready[data-motion="on"] .scroll-film{height:330svh}.webgl-ready .film-shot{padding-bottom:100px}.webgl-ready .film-shot h2{font-size:10vw}}
+@media(max-height:560px){.webgl-ready .film-shot{padding-bottom:55px}.webgl-ready .film-shot h2{font-size:32px;margin-block:8px}.webgl-ready .film-shot p{font-size:12px}}
+
+/* Equal side columns keep the scroll meter on the optical center. */
+.film-bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,32vw) minmax(0,1fr)}
+.film-meter{width:100%;max-width:none}.film-percent{justify-self:end}
+/* On touch screens the story is an SVG circuit, with no WebGL canvas or HDR. */
+.flat-ready .world-viewport{display:none!important}
+.flat-ready .process-diagram{visibility:visible;position:relative;height:290px;min-height:0;padding:0;overflow:hidden}
+.flat-ready .process-diagram> :not(.flat-circuit){display:none}
+.flat-circuit{width:100%;height:100%;display:block;overflow:hidden;pointer-events:none}
+.flat-circuit rect{fill:#1b2117;stroke:#69794b;stroke-width:.8}
+.flat-circuit g path{fill:none;stroke:var(--acid);stroke-width:1.5}
+.flat-traces{fill:none;stroke:#7c9250;stroke-width:1;stroke-dasharray:3 5}
+.flat-ready .film-system,.flat-ready .film-grid{display:none}
+.flat-ready .film-stage>.flat-circuit{position:absolute;top:12%;left:8%;width:84%;height:48%;opacity:.85}
+.flat-ready.cinema-ready[data-motion="on"] .scroll-film{height:250svh}
+.flat-ready .film-shot{justify-content:flex-end;padding-bottom:105px}
+.flat-ready .film-shot h2{font-size:min(10vw,72px);margin-block:16px}
+.flat-ready .signature-reel{display:block;background:#111210}
+.flat-ready[data-motion="on"] .signature-reel{height:170svh}
+.flat-ready[data-motion="on"] .signature-stage{position:sticky;top:72px;height:calc(100svh - 72px)}
+.flat-ready .signature-stage>.flat-circuit{position:absolute;inset:18% 5%;width:90%;height:65%}
+.flat-ready .case-shot{padding-right:6%!important}
+[data-motion="off"].flat-ready .signature-reel{display:none}
+@media(max-width:780px){.film-bottom{grid-template-columns:1fr;gap:10px}.film-bottom>.mono:first-child{max-width:none}.film-meter{grid-row:1}.film-percent{position:absolute;right:0;bottom:0}.film-top{gap:12px}.film-top a{max-width:42%;text-align:right}}
+@media(max-height:560px){.flat-ready .film-stage>.flat-circuit{top:8%;left:28%;width:44%;height:42%;opacity:.4}.flat-ready .film-shot{padding-bottom:62px}.flat-ready .film-shot h2{font-size:32px;margin-block:8px}}
+
+.case-number{letter-spacing:-.035em}
+.case-flow{flex-shrink:0;margin-bottom:24px!important}
+.case-build .case-line{flex-shrink:0}
+.case-frame-bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,32vw) minmax(0,1fr)}
+.case-track{width:100%;max-width:none}.case-position{justify-self:end}
+@media(max-width:780px){.case-frame-bottom{grid-template-columns:1fr;gap:10px}.case-frame-bottom>span:first-child{max-width:none}.case-track{grid-row:1}.case-position{position:absolute;right:6%;bottom:20px}.case-frame-bottom>span:first-child{padding-right:65px}}
+@media(max-width:780px) and (min-height:561px) and (max-height:700px){
+ .case-build h3{font-size:26px;margin:12px 0}
+ .case-flow{margin-block:10px!important;gap:6px}
+ .case-flow-node{padding:8px 10px;font-size:11px}
+ .case-build .case-line{font-size:12px;line-height:1.5}
+ .case-kicker{font-size:9px}
+}

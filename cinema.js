@@ -12,10 +12,10 @@
   const system = film.querySelector('.film-system');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const mobile = matchMedia('(max-width: 780px)');
-  let frame = 0, active = true, dirty = true, start = 0, travel = 1, last = -1;
+  let frame = 0, active = true, dirty = true, start = 0, travel = 1, last = -1, renderY = scrollY, lastTime = 0;
   const clamp = n => Math.max(0, Math.min(1, n));
   const ease = n => { n = clamp(n); return n*n*(3-2*n); };
-  function draw() {
+  function draw(time=0) {
     frame = 0;
     if (document.hidden || !active || root.dataset.motion !== 'on' || reduced.matches) return;
     if (dirty) {
@@ -23,10 +23,14 @@
       travel = Math.max(1, film.offsetHeight - stage.offsetHeight);
       dirty = false; last = -1;
     }
-    const p = clamp((window.scrollY - start) / travel);
+    const dt=Math.min(50,time-lastTime||16);lastTime=time;
+    renderY+=(scrollY-renderY)*(1-Math.exp(-dt/75));
+    if(Math.abs(scrollY-renderY)<.1)renderY=scrollY;
+    if(Math.abs(scrollY-renderY)>.1)schedule();
+    const p = clamp((renderY - start) / travel);
     if (p === last) return;
     last = p;
-    const a = ease((p-.24)/.13), b = ease((p-.61)/.13);
+    const a = ease((p-.48)/.12), b = ease((p-.83)/.1);
     const visibility = [1-a, a*(1-b), b];
     shots.forEach((shot,i) => {
       const entering = i===0 ? 1 : i===1 ? a : b;
