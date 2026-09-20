@@ -163,18 +163,33 @@
 @media(prefers-reduced-motion:reduce){.case-ready[data-motion="on"] .case-reel{height:auto}.case-ready[data-motion="on"] .case-screen{position:relative;height:auto;min-height:0;top:0}.case-ready[data-motion="on"] .case-shot{position:relative;opacity:1!important;visibility:visible!important;transform:none!important}.case-ready[data-motion="on"] .case-frame-top,.case-ready[data-motion="on"] .case-frame-bottom{position:relative}.case-flow-node{opacity:1!important;transform:none!important}.case-scan{display:none!important}}
 @media print{.case-reel{height:auto!important}.case-screen{position:static!important;height:auto!important}.case-shot{position:relative!important;opacity:1!important;visibility:visible!important;transform:none!important}.case-frame-top,.case-frame-bottom,.case-scan{display:none!important}}
 
-/* One real 3D object follows the story. Text stays in the document layer. */
-.world-host{position:absolute;inset:0;pointer-events:none;overflow:hidden;display:block}
-.world-host canvas{display:block;width:100%;height:100%}
-.world-host:empty{display:none}.world-signature:empty{display:block}
-.diagram-stage{height:290px}.diagram-stage.world-active>.orbit,.diagram-stage.world-active>.diagram-core,.diagram-stage.world-active>.node{visibility:hidden}
-.world-film{opacity:.30}.film-art.world-active>.film-system,.film-art.world-active>.film-grid{visibility:hidden}
-.world-case{left:52%;z-index:0}.case-screen.world-active .case-scan{display:none}
-.case-screen.world-active .case-shot{padding-right:49%}.case-screen.world-active .case-build h3{font-size:clamp(30px,3.7vw,54px)}
-.case-screen.world-active .case-flow{flex-direction:column;max-width:410px;gap:8px;margin:16px 0}
-.case-screen.world-active .case-flow-node{flex-direction:row;align-items:center;padding:10px 14px;font-size:13px}
-.case-screen.world-active .case-build .case-line{font-size:15px}
-.contact{position:relative}.world-signature{position:relative;height:240px;max-width:600px;margin:0 auto}
-@media(max-width:780px){.world-case{left:32%;opacity:.24}.case-screen.world-active .case-shot{padding-right:6%}.world-film{opacity:.20}.case-screen.world-active .case-build h3{font-size:31px}.world-signature{height:190px}.diagram-stage{height:240px}}
-@media(max-width:480px){.process-diagram{display:block}.hero-aside{grid-template-columns:1fr}.hero-summary{margin-top:4px}}
-@media print{.world-host{display:none!important}.case-screen.world-active .case-shot{padding-right:6%}.diagram-stage.world-active>.orbit,.diagram-stage.world-active>.diagram-core,.diagram-stage.world-active>.node{visibility:visible}}
+/* A full scroll chapter makes the signature assembly visible, in both directions. */
+.signature-reel{display:none;background:#0b0d0a}
+.webgl-ready .signature-reel{display:block}
+.signature-stage{position:relative;height:580px;overflow:hidden;background:radial-gradient(ellipse at 50% 48%,#34433135,transparent 65%)}
+.signature-stage .world-signature{position:absolute;inset:0;height:100%;max-width:none;margin:0}
+.signature-caption{position:absolute;inset:32px 6% auto;z-index:1;display:flex;justify-content:space-between;gap:24px;color:var(--acid);font-size:11px;letter-spacing:.06em;pointer-events:none}
+.signature-hint{color:var(--muted)}
+.webgl-ready[data-motion="on"] .signature-reel{height:230svh}
+.webgl-ready[data-motion="on"] .signature-stage{position:sticky;top:86px;height:calc(100svh - 86px)}
+@media(max-width:780px){.webgl-ready[data-motion="on"] .signature-reel{height:210svh}.webgl-ready[data-motion="on"] .signature-stage{top:72px;height:calc(100svh - 72px)}.signature-caption{font-size:9px;flex-direction:column;gap:12px}}
+@media(prefers-reduced-motion:reduce){.webgl-ready[data-motion="on"] .signature-reel{height:auto}.webgl-ready[data-motion="on"] .signature-stage{position:relative;top:0;height:480px}.signature-hint{display:none}}
+[data-motion="off"] .signature-hint{display:none}
+@media print{.signature-reel{display:none!important}}
+
+/* The same object remains in the viewport throughout the entire scroll. */
+.world-viewport{position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden;contain:strict}
+.world-viewport canvas{display:block;width:100%;height:100%}
+.webgl-ready .process-diagram{visibility:hidden;min-height:310px}
+.webgl-ready .film-system,.webgl-ready .film-grid{visibility:hidden}
+.webgl-ready .case-scan{display:none!important}
+.webgl-ready .case-shot{padding-right:49%}
+.webgl-ready .case-build h3{font-size:clamp(30px,3.7vw,54px)}
+.webgl-ready .case-flow{flex-direction:column;max-width:410px;gap:8px;margin:16px 0}
+.webgl-ready .case-flow-node{flex-direction:row;align-items:center;padding:10px 14px;font-size:13px}
+.webgl-ready .case-build .case-line{font-size:15px}
+@media(max-width:780px){.webgl-ready .case-shot{padding-right:6%}.webgl-ready .case-build h3{font-size:31px}.webgl-ready .process-diagram{display:block;min-height:160px;height:160px}.webgl-ready .hero-aside{grid-template-columns:1fr}}
+@media print{.world-viewport{display:none}.webgl-ready .process-diagram{visibility:visible}.webgl-ready .case-shot{padding-right:6%}}
+[data-motion="off"] .world-viewport,[data-motion="off"] .signature-reel{display:none}
+[data-motion="off"].webgl-ready .process-diagram{visibility:visible}
+@media(prefers-reduced-motion:reduce){.world-viewport,.signature-reel{display:none!important}.webgl-ready .process-diagram{visibility:visible}}
