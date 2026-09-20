@@ -203,3 +203,15 @@
 /* Short landscape windows keep text accessible instead of cropping pinned scenes. */
 @media(max-height:560px){.case-ready[data-motion="on"] .case-reel{height:auto}.case-ready[data-motion="on"] .case-screen{height:auto;min-height:0;position:relative;top:0}.case-ready[data-motion="on"] .case-shot{position:relative;opacity:1!important;visibility:visible!important;transform:none!important;padding:35px 6%!important}.case-ready[data-motion="on"] .case-frame-top,.case-ready[data-motion="on"] .case-frame-bottom{position:relative}.case-flow-node{opacity:1!important;transform:none!important}.signature-stage{min-height:240px}.webgl-ready[data-motion="on"] .signature-stage{top:72px;height:calc(100svh - 72px)}}
 @media(max-height:560px){.film-stage{min-height:0}.film-shot{padding-block:40px}.film-shot h2{font-size:clamp(32px,5vw,56px);margin-block:12px}.film-shot p{font-size:13px}.film-bottom{bottom:12px}}
+/* The complete document sits above the persistent WebGL layer, including
+   children that create their own stacking contexts through transforms. */
+.webgl-ready .world-viewport{z-index:0}
+.webgl-ready main{position:relative;z-index:1}
+.webgl-ready .footer{position:relative;z-index:1;background:var(--bg)}
+.webgl-ready.cinema-ready[data-motion="on"] .scroll-film,
+.webgl-ready .case-cinematic,
+.webgl-ready .signature-reel{background:transparent}
+.webgl-ready .case-screen{background:radial-gradient(ellipse at 70% 50%,#25321530,transparent 65%)}
+.webgl-ready .toolkit{background:#1b1d1826}
+.webgl-ready .contact{background:linear-gradient(120deg,#1a1d1540,#11121040)}
+.webgl-ready .hero-summary{background:transparent;text-shadow:0 1px 3px var(--bg),0 0 12px var(--bg)}
