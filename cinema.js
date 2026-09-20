@@ -36,12 +36,13 @@
       const entering = i===0 ? 1 : i===1 ? a : b;
       const leaving = i===0 ? a : i===1 ? b : 0;
       shot.style.opacity = visibility[i];
-      shot.style.transform = `translate3d(0,${(1-entering)*80-leaving*95}px,0) scale(${1+(1-entering)*.09-leaving*.09})`;
+      shot.style.transform = root.classList.contains('flat-ready') ? 'none' : `translate3d(0,${(1-entering)*80-leaving*95}px,0) scale(${1+(1-entering)*.09-leaving*.09})`;
       shot.style.visibility = visibility[i] < .002 ? 'hidden' : 'visible';
     });
+    const lightweight=root.classList.contains('flat-ready');
     const zoom = .72 + p*.48;
-    system.style.transform = `translate(-50%,-50%) scale(${zoom}) rotate(${mobile.matches ? p*120 : 0}deg)`;
-    if (!mobile.matches) {
+    if(!lightweight)system.style.transform = `translate(-50%,-50%) scale(${zoom}) rotate(${mobile.matches ? p*120 : 0}deg)`;
+    if (!mobile.matches&&!lightweight) {
       rings[0].style.transform = `rotate(${p*150}deg) scale(${1-b*.2})`;
       rings[1].style.transform = `rotate(${-p*280}deg) scale(${1+a*.22})`;
       rings[2].style.transform = `rotate(${-35+p*240}deg) scaleY(${1+a*.6-b*.5})`;

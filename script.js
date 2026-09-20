@@ -19,3 +19,18 @@
   button.addEventListener('click', () => setLanguage(lang === 'ru' ? 'en' : 'ru'));
   setLanguage(lang);
 })();
+
+// Fresh visits to the root start at the top; keep deep links and history navigation.
+(() => {
+ const navigation=performance.getEntriesByType('navigation')[0];
+ if(location.hash&&location.hash!=='#'||navigation?.type==='back_forward')return;
+ let interacted=false;
+ const stop=()=>{interacted=true;};
+ addEventListener('wheel',stop,{passive:true,once:true});
+ addEventListener('touchstart',stop,{passive:true,once:true});
+ addEventListener('keydown',stop,{once:true});
+ const reset=()=>{if(!interacted)scrollTo({top:0,left:0,behavior:'instant'});};
+ addEventListener('load',reset,{once:true});
+ document.fonts?.ready.then(reset);
+ reset();
+})();

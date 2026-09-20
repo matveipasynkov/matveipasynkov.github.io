@@ -9,7 +9,7 @@
  const smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
  function draw(){
   frame=0;
-  if(document.hidden||!active||root.dataset.motion!=='on'||reduced.matches)return;
+  if(document.hidden||!active||root.dataset.motion!=='on'||reduced.matches||root.classList.contains('flat-ready'))return;
   if(dirty){start=reel.getBoundingClientRect().top+scrollY-(parseFloat(getComputedStyle(screen).top)||0);travel=Math.max(1,reel.offsetHeight-screen.offsetHeight);dirty=false;previous=-1}
   const p=clamp((scrollY-start)/travel);if(p===previous)return;previous=p;
   const a=smooth((p-.22)/.14),b=smooth((p-.62)/.14),opacity=[1-a,a*(1-b),b];

@@ -2,8 +2,11 @@
 const compact=matchMedia('(max-width:780px), (pointer:coarse)');
 let flat=false;
 function selectScene(){
+ if(document.documentElement.dataset.motion!=='on')return;
  if(compact.matches){
-  if(!flat){flat=true;document.documentElement.classList.add('flat-ready');import('./flat-scene.js?v=7');}
- }else if(!flat)import('./world.js?v=world-7');
+  if(!flat){flat=true;document.documentElement.classList.add('flat-ready');import('./flat-scene.js?v=static-8').then(()=>document.dispatchEvent(new Event('portfolio-scene-ready')));}
+ }else if(!flat)import('./world.js?v=world-7').then(()=>document.dispatchEvent(new Event('portfolio-scene-ready')));
 }
 selectScene();compact.addEventListener('change',selectScene);
+
+new MutationObserver(selectScene).observe(document.documentElement,{attributes:true,attributeFilter:['data-motion']});

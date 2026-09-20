@@ -262,3 +262,83 @@
  .case-build .case-line{font-size:12px;line-height:1.5}
  .case-kicker{font-size:9px}
 }
+
+/* Static mode is its own editorial layout, not a paused cinematic frame. */
+html[data-motion="off"]{scroll-behavior:auto}
+[data-motion="off"] .scroll-film,[data-motion="off"] .signature-reel,
+[data-motion="off"] .world-viewport,[data-motion="off"] .reading-progress,
+[data-motion="off"] .scroll-cue{display:none!important}
+[data-motion="off"] .hero-display,[data-motion="off"] .hero-aside,
+[data-motion="off"] .hero-bottom,[data-motion="off"] .hero-display>div>span{transform:none!important;opacity:1!important}
+[data-motion="off"] .process-diagram{display:block;visibility:visible;height:auto;min-height:0;transform:none}
+[data-motion="off"] .process-diagram>.flat-circuit{display:none}
+[data-motion="off"] .process-diagram>.diagram-top,
+[data-motion="off"] .process-diagram>.diagram-bottom{display:flex}
+[data-motion="off"] .process-diagram>.diagram-stage{display:grid;height:195px}
+[data-motion="off"] .hero-summary{text-shadow:none}
+[data-motion="off"] .toolkit{background:#1b1d18}
+[data-motion="off"] .contact{background:linear-gradient(120deg,#1a1d15,var(--bg))}
+:is([data-motion="off"],.flat-ready.case-ready) .case-cinematic{background:var(--bg);padding-bottom:64px}
+:is([data-motion="off"],.flat-ready.case-ready) .case-reel{height:auto}
+:is([data-motion="off"],.flat-ready.case-ready) .case-screen{position:relative;top:auto;height:auto;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding:32px max(32px,calc((100% - 1312px)/2));background:var(--surface);overflow:visible}
+:is([data-motion="off"],.flat-ready.case-ready) .case-frame-top{grid-column:1/-1;position:static;padding:0 0 8px;order:0}
+:is([data-motion="off"],.flat-ready.case-ready) .case-frame-top a{display:none}
+:is([data-motion="off"],.flat-ready.case-ready) .case-frame-bottom,:is([data-motion="off"],.flat-ready.case-ready) .case-scan{display:none!important}
+:is([data-motion="off"],.flat-ready.case-ready) .case-shot{position:static;inset:auto;display:block;min-width:0;padding:28px!important;will-change:auto;border:1px solid var(--line);background:var(--bg)}
+:is([data-motion="off"],.flat-ready.case-ready) .case-before{order:1}
+:is([data-motion="off"],.flat-ready.case-ready) .case-after{order:2;border-color:#586a35}
+:is([data-motion="off"],.flat-ready.case-ready) .case-build{order:3;grid-column:1/-1}
+:is([data-motion="off"],.flat-ready.case-ready) .case-number{font-size:clamp(64px,8vw,116px);line-height:1.1;letter-spacing:-.035em;margin:20px 0}
+:is([data-motion="off"],.flat-ready.case-ready) .case-line,:is([data-motion="off"],.flat-ready.case-ready) .case-build .case-line{font-size:16px;line-height:1.7;max-width:70ch}
+:is([data-motion="off"],.flat-ready.case-ready) .case-build h3{font-size:clamp(28px,3vw,40px);margin:16px 0 24px}
+:is([data-motion="off"],.flat-ready.case-ready) .case-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:none;gap:12px;margin:0 0 24px!important}
+:is([data-motion="off"],.flat-ready.case-ready) .case-flow-node{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:18px;font-size:14px;will-change:auto}
+:is([data-motion="off"],.flat-ready.case-ready) .case-kicker{font-size:11px}
+@media(max-width:780px){
+ [data-motion="off"] .hero-aside{grid-template-columns:1fr 1fr}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-screen{gap:16px;padding:24px}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-shot{padding:20px!important}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-number{font-size:clamp(54px,9vw,78px)}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-number small{margin-left:8px}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-up-to{margin-right:8px}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-flow{grid-template-columns:1fr}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-flow-node{flex-direction:row;align-items:center;padding:12px;font-size:13px}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-line,:is([data-motion="off"],.flat-ready.case-ready) .case-build .case-line{font-size:14px}
+}
+@media(max-width:540px){
+ [data-motion="off"] .hero-aside{grid-template-columns:1fr}
+ [data-motion="off"] .process-diagram{max-width:360px;width:100%}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-screen{grid-template-columns:1fr;padding:20px}
+ :is([data-motion="off"],.flat-ready.case-ready) .case-number{font-size:80px}
+}
+
+/* Touch devices keep one short scene; the case reads in normal document flow. */
+.flat-ready .ribbon-track{animation:none!important;transform:none!important}
+.flat-ready .hero-display,.flat-ready .hero-aside,.flat-ready .hero-bottom,
+.flat-ready .hero-display>div>span,.flat-ready .display-star,
+.flat-ready .award-star{animation:none!important;transform:none!important;opacity:1!important}
+.flat-ready .reveal{opacity:1!important;transform:none!important;transition:none!important}
+.flat-ready .reading-progress,.flat-ready .award-feature:after{display:none}
+.flat-ready.cinema-ready[data-motion="on"] .scroll-film{height:200svh}
+.flat-ready[data-motion="on"] .signature-reel{height:auto}
+.flat-ready[data-motion="on"] .signature-stage{height:380px;position:relative;top:auto;min-height:0}
+.flat-ready .signature-stage>.flat-circuit{inset:15% 5%;height:80%}
+.flat-ready .flat-frame{transform-origin:center;will-change:opacity}
+
+.flat-ready .case-shot,.flat-ready .case-flow-node{opacity:1!important;visibility:visible!important;transform:none!important}
+
+.case-approx{display:inline-block;margin-right:.06em;font-size:.8em;letter-spacing:0}
+:is([data-motion="off"],.flat-ready.case-ready) .case-kicker{font-size:0}
+:is([data-motion="off"],.flat-ready.case-ready) .case-kicker>span{font-size:11px}
+/* Reserve the hero composition before the scene loads; avoid scroll anchoring jumps. */
+main{overflow-anchor:none}
+@media(min-width:781px){
+ .hero{padding-top:26px;padding-bottom:36px}
+ .hero-identity{margin-top:30px}
+ .hero-grid{margin-top:22px}
+ .hero-bottom{margin-top:26px}
+ [data-motion="on"] .hero-aside .process-diagram{height:clamp(240px,32svh,340px);min-height:0;overflow:hidden}
+ .hero-summary{margin-top:16px}
+}
+
+.flat-ready .film-shot{will-change:opacity;transform:none!important}

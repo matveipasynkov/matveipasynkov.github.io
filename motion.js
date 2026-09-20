@@ -44,7 +44,7 @@
     const extent = root.scrollHeight - window.innerHeight;
     const scroll = extent > 0 ? Math.min(1, Math.max(0, window.scrollY / extent)) : 0;
     progress.style.transform = `scaleX(${scroll})`;
-    if (!enabled() || document.hidden) { pending.clear(); return; }
+    if (!enabled() || document.hidden || root.classList.contains('flat-ready')) { pending.clear(); return; }
     hero.style.setProperty('--hero-shift', `${Math.min(window.scrollY, 650) * 0.055}px`);
     // Read geometry together before updating any surface styles.
     const positions = [...pending].map(([el, point]) => ({el, point, rect: el.getBoundingClientRect()}));
@@ -60,7 +60,7 @@
       el.style.setProperty('--shine-y', `${y*100}%`);
     });
   }
-  function schedule() { if (!frame) frame = requestAnimationFrame(render); }
+  function schedule() { if (!enabled() || root.classList.contains('flat-ready')) return; if (!frame) frame = requestAnimationFrame(render); }
   surfaces.forEach(el => {
     el.addEventListener('pointermove', event => {
       if (!enabled() || !pointer.matches || event.pointerType === 'touch') return;
@@ -77,10 +77,29 @@
     if (document.hidden) { cancelAnimationFrame(frame); frame=0; pending.clear(); }
     else schedule();
   });
+  let readingAnchor=null;
+  function restoreReadingPosition(){
+    if(!readingAnchor)return;
+    const {element,offset}=readingAnchor;
+    window.scrollTo({top:Math.max(0,element.getBoundingClientRect().top+scrollY+Math.min(offset,Math.max(0,element.offsetHeight-1))),behavior:'instant'});
+  }
+  document.addEventListener('portfolio-scene-ready',restoreReadingPosition);
+  window.addEventListener('wheel',()=>{readingAnchor=null;},{passive:true});
+  window.addEventListener('touchstart',()=>{readingAnchor=null;},{passive:true});
   toggle.addEventListener('click', () => {
+    const line=document.querySelector('.header').offsetHeight;
+    const sections=[...document.querySelectorAll('main>section')];
+    let element=sections.find(el=>{const r=el.getBoundingClientRect();return r.height>0&&r.bottom>line+24;})||sections[0];
+    let offset=scrollY-(element.getBoundingClientRect().top+scrollY);
+    if(element.matches('.scroll-film')){element=document.querySelector('#experience');offset=-line;}
+    if(element.matches('.signature-reel')){element=document.querySelector('#contact');offset=-line;}
+    readingAnchor={element,offset};
+    const currentAnchor=readingAnchor;
+    setTimeout(()=>{if(readingAnchor===currentAnchor)readingAnchor=null;},1500);
     paused = !paused;
     try { localStorage.setItem('mp-motion', paused ? 'paused' : 'playing'); } catch (_) {}
     apply();
+    requestAnimationFrame(restoreReadingPosition);
   });
   reduced.addEventListener('change', apply);
   pointer.addEventListener('change', () => { pending.clear(); surfaces.forEach(reset); });

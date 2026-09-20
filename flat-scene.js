@@ -1,38 +1,34 @@
-// A small SVG circuit: discrete data becomes an ordered system, then a signature.
+// Three SVG compositions are built once; scrolling only crossfades whole layers.
 const root=document.documentElement,ns='http://www.w3.org/2000/svg';
 const reduced=matchMedia('(prefers-reduced-motion:reduce)');
-const clamp=x=>Math.max(0,Math.min(1,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)},mix=(a,b,t)=>a+(b-a)*t;
+const clamp=x=>Math.max(0,Math.min(1,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
 const glyph=['110110111100','101010100100','101010111100','101010100000','101010100011','000000100011'];
 const letters=[];glyph.forEach((r,y)=>[...r].forEach((v,x)=>{if(v==='1')letters.push([36+x*26,78+y*26])}));
 function make(parent,kind){
  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 360 310');svg.classList.add('flat-circuit');svg.setAttribute('aria-hidden','true');
- const lines=document.createElementNS(ns,'path');lines.setAttribute('d','M24 65H110V120H240V190H336 M24 245H85V190H190V65H336 M50 30V280 M310 30V280');lines.setAttribute('class','flat-traces');svg.append(lines);
- const cells=letters.map((p,i)=>{const g=document.createElementNS(ns,'g'),r=document.createElementNS(ns,'rect'),bar=document.createElementNS(ns,'path');r.setAttribute('width','20');r.setAttribute('height','20');r.setAttribute('rx','3');bar.setAttribute('d','M4 6H16');g.append(r,bar);svg.append(g);return g;});
- parent.append(svg);return{svg,cells,lines,kind,parent,start:0,travel:1};
+ const layers=[0,1,2].map(state=>{
+  const group=document.createElementNS(ns,'g');group.classList.add('flat-frame');group.style.opacity=state===(kind==='signature'?2:1)?1:0;
+  if(state<2){const trace=document.createElementNS(ns,'path');trace.setAttribute('d','M24 65H110V120H240V190H336 M24 245H85V190H190V65H336 M50 30V280 M310 30V280');trace.setAttribute('class','flat-traces');group.append(trace);}
+  letters.forEach((p,i)=>{const cell=document.createElementNS(ns,'g'),r=document.createElementNS(ns,'rect'),bar=document.createElementNS(ns,'path');const pos=state===0?[30+(i*73%290),40+(i*47%215)]:state===1?[49+(i%7)*40,55+Math.floor(i/7)*36]:p;
+   cell.setAttribute('transform',`translate(${pos[0]} ${pos[1]})`);r.setAttribute('width','20');r.setAttribute('height','20');r.setAttribute('rx','3');bar.setAttribute('d','M4 6H16');cell.append(r,bar);group.append(cell);
+  });svg.append(group);return group;
+ });parent.append(svg);return{layers,parent};
 }
-const scenes=[make(document.querySelector('.process-diagram'),'hero'),make(document.querySelector('.film-stage'),'film'),make(document.querySelector('.signature-stage'),'signature')];
-let frame=0,dirty=true;
+make(document.querySelector('.process-diagram'),'hero');
+const scene=make(document.querySelector('.film-stage'),'film');
+make(document.querySelector('.signature-stage'),'signature');
+let frame=0,dirty=true,active=false,start=0,travel=1,last=-1;
 function draw(){
- frame=0;if(document.hidden)return;
- const on=root.dataset.motion==='on'&&!reduced.matches;
- if(dirty){for(const s of scenes){const reel=s.kind==='film'?s.parent.parentElement:s.kind==='signature'?s.parent.parentElement:s.parent; s.start=reel.getBoundingClientRect().top+scrollY-(parseFloat(getComputedStyle(s.parent).top)||72);s.travel=Math.max(1,reel.offsetHeight-s.parent.offsetHeight);}dirty=false;}
- for(const s of scenes){
-  const rect=s.parent.getBoundingClientRect();if(rect.bottom<0||rect.top>innerHeight)continue;
-  const p=on?clamp((scrollY-s.start)/s.travel):1;
-  const assemble=s.kind==='hero'?.15:s.kind==='signature'?smooth((p-.1)/.65):smooth((p-.55)/.4);
-  s.cells.forEach((cell,i)=>{
-   const scattered=[30+(i*73%290),40+(i*47%215)],ordered=[49+(i%7)*40,55+Math.floor(i/7)*36];
-   const t=s.kind==='hero'?.4:smooth(p/.5);
-   const base=[mix(scattered[0],ordered[0],t),mix(scattered[1],ordered[1],t)];
-   const x=mix(base[0],letters[i][0],assemble),y=mix(base[1],letters[i][1],assemble);
-   cell.setAttribute('transform',`translate(${x.toFixed(2)} ${y.toFixed(2)})`);
-  });
-  s.lines.style.opacity=String((1-assemble)*.55);
- }
+ frame=0;if(document.hidden||!active||root.dataset.motion!=='on'||reduced.matches)return;
+ if(dirty){const reel=scene.parent.parentElement;start=reel.getBoundingClientRect().top+scrollY-(parseFloat(getComputedStyle(scene.parent).top)||72);travel=Math.max(1,reel.offsetHeight-scene.parent.offsetHeight);dirty=false;}
+ const p=clamp((scrollY-start)/travel);if(p===last)return;last=p;
+ const a=smooth((p-.2)/.25),b=smooth((p-.65)/.25);
+ [1-a,a*(1-b),b].forEach((opacity,i)=>{scene.layers[i].style.opacity=opacity;});
 }
-function schedule(){if(!frame)frame=requestAnimationFrame(draw)}
-function measure(){dirty=true;schedule()}
+function schedule(){if(active&&!frame)frame=requestAnimationFrame(draw)}
+function measure(){dirty=true;last=-1;schedule()}
+new IntersectionObserver(entries=>{active=entries[0].isIntersecting;if(active)measure();},{rootMargin:'100px'}).observe(scene.parent.parentElement);
 addEventListener('scroll',schedule,{passive:true});addEventListener('resize',measure,{passive:true});
 new ResizeObserver(measure).observe(document.querySelector('main'));
 new MutationObserver(measure).observe(root,{attributes:true,attributeFilter:['lang','data-motion']});
-reduced.addEventListener('change',measure);document.addEventListener('visibilitychange',measure);document.fonts.ready.then(measure);measure();
+reduced.addEventListener('change',measure);document.addEventListener('visibilitychange',measure);document.fonts.ready.then(measure);
