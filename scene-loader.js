@@ -4,7 +4,7 @@ let flat=false;
 function selectScene(){
  if(document.documentElement.dataset.motion!=='on')return;
  if(compact.matches){
-  if(!flat){flat=true;document.documentElement.classList.add('flat-ready');import('./flat-scene.js?v=static-10').then(()=>document.dispatchEvent(new Event('portfolio-scene-ready')));}
+  if(!flat){flat=true;document.documentElement.classList.add('flat-ready');import('./flat-scene.js?v=assembly-11').then(()=>document.dispatchEvent(new Event('portfolio-scene-ready')));}
  }else if(!flat)import('./world.js?v=world-7').then(()=>document.dispatchEvent(new Event('portfolio-scene-ready')));
 }
 selectScene();compact.addEventListener('change',selectScene);

@@ -342,3 +342,6 @@ main{overflow-anchor:none}
 }
 
 .flat-ready .film-shot{will-change:opacity;transform:none!important}
+
+.flat-assembly{position:absolute;inset:15% 5%;height:80%;pointer-events:none;overflow:hidden}
+.flat-row{position:absolute;inset:0;will-change:transform,opacity}

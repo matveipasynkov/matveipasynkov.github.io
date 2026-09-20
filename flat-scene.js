@@ -15,18 +15,25 @@ function make(parent,kind){
 }
 make(document.querySelector('.process-diagram'),'hero');
 const scene=make(document.querySelector('.film-stage'),'film');
-make(document.querySelector('.signature-stage'),'signature');
-let frame=0,dirty=true,active=false,start=0,travel=1,last=-1;
+const signature=document.querySelector('.signature-stage');
+const assembly=document.createElement('div');assembly.className='flat-assembly';assembly.setAttribute('aria-hidden','true');
+const rows=glyph.map((row,y)=>{
+ const layer=document.createElement('div');layer.className='flat-row';
+ const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 360 310');svg.classList.add('flat-circuit');
+ [...row].forEach((v,x)=>{if(v!=='1')return;const cell=document.createElementNS(ns,'g'),rect=document.createElementNS(ns,'rect'),bar=document.createElementNS(ns,'path');cell.setAttribute('transform',`translate(${36+x*26} ${78+y*26})`);rect.setAttribute('width','20');rect.setAttribute('height','20');rect.setAttribute('rx','3');bar.setAttribute('d','M4 6H16');cell.append(rect,bar);svg.append(cell);});
+ layer.append(svg);assembly.append(layer);return layer;
+});signature.append(assembly);
+let frame=0,dirty=true,active=false,signatureActive=false,start=0,travel=1,signatureStart=0,signatureTravel=1,last=-1,lastSignature=-1;
 function draw(){
- frame=0;if(document.hidden||!active||root.dataset.motion!=='on'||reduced.matches)return;
- if(dirty){const reel=scene.parent.parentElement;start=reel.getBoundingClientRect().top+scrollY-(parseFloat(getComputedStyle(scene.parent).top)||72);travel=Math.max(1,reel.offsetHeight-scene.parent.offsetHeight);dirty=false;}
- const p=clamp((scrollY-start)/travel);if(p===last)return;last=p;
- const a=smooth((p-.2)/.25),b=smooth((p-.65)/.25);
- [1-a,a*(1-b),b].forEach((opacity,i)=>{scene.layers[i].style.opacity=opacity;});
+ frame=0;if(document.hidden||root.dataset.motion!=='on'||reduced.matches)return;
+ if(dirty){const reel=scene.parent.parentElement;start=reel.getBoundingClientRect().top+scrollY-(parseFloat(getComputedStyle(scene.parent).top)||72);travel=Math.max(1,reel.offsetHeight-scene.parent.offsetHeight);signatureStart=signature.getBoundingClientRect().top+scrollY-innerHeight*.92;signatureTravel=Math.max(1,innerHeight*.64);dirty=false;}
+ if(active){const p=clamp((scrollY-start)/travel);if(p!==last){last=p;const a=smooth((p-.2)/.25),b=smooth((p-.65)/.25);[1-a,a*(1-b),b].forEach((opacity,i)=>{scene.layers[i].style.opacity=opacity;});}}
+ if(signatureActive){const p=clamp((scrollY-signatureStart)/signatureTravel);if(p!==lastSignature){lastSignature=p;rows.forEach((row,i)=>{const q=smooth((p-i*.055)/.68),offset=1-q;row.style.transform=`translate3d(${(i%2?1:-1)*offset*65}px,${(i-2.5)*offset*20}px,0)`;row.style.opacity=String(.25+.75*q);});}}
 }
-function schedule(){if(active&&!frame)frame=requestAnimationFrame(draw)}
-function measure(){dirty=true;last=-1;schedule()}
+function schedule(){if((active||signatureActive)&&!frame)frame=requestAnimationFrame(draw)}
+function measure(){dirty=true;last=-1;lastSignature=-1;schedule()}
 new IntersectionObserver(entries=>{active=entries[0].isIntersecting;if(active)measure();},{rootMargin:'100px'}).observe(scene.parent.parentElement);
+new IntersectionObserver(entries=>{signatureActive=entries[0].isIntersecting;if(signatureActive)measure();},{rootMargin:'100px'}).observe(signature);
 addEventListener('scroll',schedule,{passive:true});addEventListener('resize',measure,{passive:true});
 new ResizeObserver(measure).observe(document.querySelector('main'));
 new MutationObserver(measure).observe(root,{attributes:true,attributeFilter:['lang','data-motion']});
