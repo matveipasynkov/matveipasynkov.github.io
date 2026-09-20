@@ -362,3 +362,9 @@ main{overflow-anchor:none}
 [data-motion="off"] .process-diagram>.mobile-assembly{display:none!important}
 @media(prefers-reduced-motion:reduce){.mobile-module{animation:none!important;transform:none!important;opacity:1!important}}
 @media(max-width:480px){.flat-ready[data-motion="on"] .hero-aside{grid-template-columns:1fr;gap:18px}}
+
+/* Restore the pre-WebGL mobile experience; the desktop scene stays separate. */
+.legacy-mobile .world-viewport,.legacy-mobile .signature-reel{display:none!important}
+.legacy-mobile .film-system{visibility:visible}
+.legacy-mobile .film-shot{justify-content:center;padding:70px 24px}
+@media(max-height:560px){.legacy-mobile .film-shot{padding-block:40px}}

@@ -104,7 +104,7 @@ function start(){
   dirty=false;
  }
  function draw(time=0){
-  frame=0;if(document.hidden||lost||root.classList.contains('flat-ready'))return;
+  frame=0;if(document.hidden||lost||(root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;
   if(light()&&time-lastTime<30){frame=requestAnimationFrame(draw);return}const dt=Math.min(50,time-lastTime||16);lastTime=time;
   renderY+=(scrollY-renderY)*(1-Math.exp(-dt/75));if(Math.abs(scrollY-renderY)<.1)renderY=scrollY;
   if(dirty)measure();
@@ -215,7 +215,7 @@ dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.scale.set(
   blocks.instanceMatrix.needsUpdate=true;seams.instanceMatrix.needsUpdate=true;insets.instanceMatrix.needsUpdate=true;panels.instanceMatrix.needsUpdate=true;bolts.instanceMatrix.needsUpdate=true;renderer.render(scene,camera);
   if(Math.abs(scrollY-renderY)>.1)schedule();
  }
- function schedule(){if(root.classList.contains('flat-ready'))return;if(!frame&&!lost)frame=requestAnimationFrame(draw)}
+ function schedule(){if((root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;if(!frame&&!lost)frame=requestAnimationFrame(draw)}
  function resize(){dirty=true;renderY=scrollY;renderer.setPixelRatio(Math.min(devicePixelRatio,light()?1.25:1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!light();bolts.visible=!light();camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();schedule()}
  addEventListener('scroll',schedule,{passive:true});addEventListener('resize',resize,{passive:true});
  addEventListener('pointermove',e=>{if(light()||root.dataset.motion!=='on'||reduced.matches)return;px=e.clientX/innerWidth-.5;py=e.clientY/innerHeight-.5;schedule()},{passive:true});

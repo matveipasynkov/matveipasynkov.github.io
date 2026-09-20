@@ -23,14 +23,15 @@
       travel = Math.max(1, film.offsetHeight - stage.offsetHeight);
       dirty = false; last = -1;
     }
+    const legacy=mobile.matches||root.classList.contains('legacy-mobile');
     const dt=Math.min(50,time-lastTime||16);lastTime=time;
-    renderY+=(scrollY-renderY)*(1-Math.exp(-dt/75));
+    if(legacy)renderY=scrollY;else renderY+=(scrollY-renderY)*(1-Math.exp(-dt/75));
     if(Math.abs(scrollY-renderY)<.1)renderY=scrollY;
     if(Math.abs(scrollY-renderY)>.1)schedule();
     const p = clamp((renderY - start) / travel);
     if (p === last) return;
     last = p;
-    const a = ease((p-.48)/.12), b = ease((p-.83)/.1);
+    const a = legacy?ease((p-.24)/.13):ease((p-.48)/.12), b = legacy?ease((p-.61)/.13):ease((p-.83)/.1);
     const visibility = [1-a, a*(1-b), b];
     shots.forEach((shot,i) => {
       const entering = i===0 ? 1 : i===1 ? a : b;

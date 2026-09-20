@@ -1,12 +1,15 @@
-// Choose the lightweight experience before downloading or initializing WebGL.
-const compact=matchMedia('(max-width:780px), (pointer:coarse)');
-let flat=false;
+// Touch devices use the original SVG cinema from before the 3D scene.
+const root=document.documentElement,compact=matchMedia('(max-width:780px), (pointer:coarse)');
+let desktopScene;
 function selectScene(){
- if(document.documentElement.dataset.motion!=='on')return;
- if(compact.matches){
-  if(!flat){flat=true;document.documentElement.classList.add('flat-ready');import('./flat-scene.js?v=mobile-13').then(()=>document.dispatchEvent(new Event('portfolio-scene-ready')));}
- }else if(!flat)import('./world.js?v=world-7').then(()=>document.dispatchEvent(new Event('portfolio-scene-ready')));
+ root.classList.toggle('legacy-mobile',compact.matches);
+ if(compact.matches){root.classList.remove('webgl-ready');return;}
+ if(root.dataset.motion!=='on')return;
+ desktopScene ||= import('./world.js?v=legacy-14');
+ desktopScene.then(()=>{
+  if(!compact.matches)root.classList.add('webgl-ready');
+  document.dispatchEvent(new Event('portfolio-scene-ready'));
+ });
 }
 selectScene();compact.addEventListener('change',selectScene);
-
-new MutationObserver(selectScene).observe(document.documentElement,{attributes:true,attributeFilter:['data-motion']});
+new MutationObserver(selectScene).observe(root,{attributes:true,attributeFilter:['data-motion']});
