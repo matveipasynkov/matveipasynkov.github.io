@@ -193,3 +193,13 @@
 [data-motion="off"] .world-viewport,[data-motion="off"] .signature-reel{display:none}
 [data-motion="off"].webgl-ready .process-diagram{visibility:visible}
 @media(prefers-reduced-motion:reduce){.world-viewport,.signature-reel{display:none!important}.webgl-ready .process-diagram{visibility:visible}}
+
+.webgl-ready .hero-summary{position:relative;z-index:5;background:var(--bg,#111210)}
+.webgl-ready.case-ready[data-motion="on"] .case-shot{padding-right:49%}
+@media(max-width:780px){.webgl-ready.case-ready[data-motion="on"] .case-shot{padding-right:6%}}
+
+.header nav a{white-space:nowrap}
+@media(max-width:360px){.header{padding-inline:16px;gap:9px}.header nav{gap:9px;font-size:11px}.header nav .arrow{display:none}}
+/* Short landscape windows keep text accessible instead of cropping pinned scenes. */
+@media(max-height:560px){.case-ready[data-motion="on"] .case-reel{height:auto}.case-ready[data-motion="on"] .case-screen{height:auto;min-height:0;position:relative;top:0}.case-ready[data-motion="on"] .case-shot{position:relative;opacity:1!important;visibility:visible!important;transform:none!important;padding:35px 6%!important}.case-ready[data-motion="on"] .case-frame-top,.case-ready[data-motion="on"] .case-frame-bottom{position:relative}.case-flow-node{opacity:1!important;transform:none!important}.signature-stage{min-height:240px}.webgl-ready[data-motion="on"] .signature-stage{top:72px;height:calc(100svh - 72px)}}
+@media(max-height:560px){.film-stage{min-height:0}.film-shot{padding-block:40px}.film-shot h2{font-size:clamp(32px,5vw,56px);margin-block:12px}.film-shot p{font-size:13px}.film-bottom{bottom:12px}}
