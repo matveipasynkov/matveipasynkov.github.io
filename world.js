@@ -18,7 +18,7 @@ function start(){
  scene.add(new THREE.HemisphereLight(0xe1edee,0x080a0c,.3));
  const key=new THREE.DirectionalLight(0xe8eddd,1.0);key.position.set(-3,5,7);key.castShadow=true;key.shadow.mapSize.set(1536,1536);Object.assign(key.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:.1,far:30});key.shadow.bias=-.0004;key.shadow.normalBias=.015;scene.add(key);
  const rim=new THREE.DirectionalLight(0xd4fd55,1.25);rim.position.set(4,2,-4);scene.add(rim);
- const cool=new THREE.DirectionalLight(0x89938a,.3);cool.position.set(-5,-1,2);scene.add(cool);
+ const cool=new THREE.DirectionalLight(0x89938a,.58);cool.position.set(-5,-1,2);scene.add(cool);
  const geometry=new RoundedBoxGeometry(1,1,1,light()?1:3,.045);
  const surface=document.createElement('canvas');surface.width=surface.height=256;const ctx=surface.getContext('2d'),pixels=ctx.createImageData(256,256);
  let seed=42;for(let y=0;y<256;y++)for(let x=0;x<256;x++){seed=(seed*1664525+1013904223)>>>0;const n=(seed>>>24)/255,v=150+Math.sin(y*2.1)*7+n*24;const k=(y*256+x)*4;pixels.data[k]=pixels.data[k+1]=pixels.data[k+2]=v;pixels.data[k+3]=255;}ctx.putImageData(pixels,0,0);
@@ -26,7 +26,7 @@ function start(){
  const Metal=light()?THREE.MeshStandardMaterial:THREE.MeshPhysicalMaterial;
  const metal=new Metal({color:0x30322d,metalness:.94,roughness:.5,roughnessMap:finish,bumpMap:finish,bumpScale:.0035,...(!light()?{clearcoat:.12,clearcoatRoughness:.34,anisotropy:.32}:{})});
  const insetMaterial=new THREE.MeshStandardMaterial({color:0x11170f,metalness:.7,roughness:.44});
- const panelMaterial=new THREE.MeshStandardMaterial({color:0x383c32,metalness:.84,roughness:.55,roughnessMap:finish,bumpMap:finish,bumpScale:.002});
+ const panelMaterial=new THREE.MeshStandardMaterial({color:0x414638,metalness:.84,roughness:.48,roughnessMap:finish,bumpMap:finish,bumpScale:.002});
  const fastenerMaterial=new THREE.MeshStandardMaterial({color:0x59604f,metalness:1,roughness:.34});
  const acid=new THREE.MeshBasicMaterial({color:0xd4fd55,toneMapped:false});
  const model=new THREE.Group();scene.add(model);
@@ -67,7 +67,7 @@ function start(){
   const slot=el('.process-diagram').getBoundingClientRect();
   const projectionHeight=22*Math.tan(THREE.MathUtils.degToRad(18));
   const fit=Math.min(1,(innerWidth/innerHeight)/1.15);
-  const heroSize=Math.min(slot.width*.88,slot.height*.85)*projectionHeight/(4.1*innerHeight*fit);
+  const heroSize=Math.min(slot.width*.92,slot.height*.9)*projectionHeight/(3.55*innerHeight*fit);
   const heroX=(slot.left+slot.width*.5)/innerWidth;
   const heroY=(slot.top+scrollY+slot.height*.5)/innerHeight;
   anchors=[

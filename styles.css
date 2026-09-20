@@ -180,7 +180,7 @@
 /* The same object remains in the viewport throughout the entire scroll. */
 .world-viewport{position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden;contain:strict}
 .world-viewport canvas{display:block;width:100%;height:100%}
-.webgl-ready .process-diagram{visibility:hidden;min-height:310px}
+.webgl-ready .process-diagram{visibility:hidden;min-height:clamp(340px,29vw,420px)}
 .webgl-ready .film-system,.webgl-ready .film-grid{visibility:hidden}
 .webgl-ready .case-scan{display:none!important}
 .webgl-ready .case-shot{padding-right:49%}
@@ -188,7 +188,7 @@
 .webgl-ready .case-flow{flex-direction:column;max-width:410px;gap:8px;margin:16px 0}
 .webgl-ready .case-flow-node{flex-direction:row;align-items:center;padding:10px 14px;font-size:13px}
 .webgl-ready .case-build .case-line{font-size:15px}
-@media(max-width:780px){.webgl-ready .case-shot{padding-right:6%}.webgl-ready .case-build h3{font-size:31px}.webgl-ready .process-diagram{display:block;min-height:160px;height:160px}.webgl-ready .hero-aside{grid-template-columns:1fr}}
+@media(max-width:780px){.webgl-ready .case-shot{padding-right:6%}.webgl-ready .case-build h3{font-size:31px}.webgl-ready .process-diagram{display:block;min-height:230px;height:230px}.webgl-ready .hero-aside{grid-template-columns:1fr}}
 @media print{.world-viewport{display:none}.webgl-ready .process-diagram{visibility:visible}.webgl-ready .case-shot{padding-right:6%}}
 [data-motion="off"] .world-viewport,[data-motion="off"] .signature-reel{display:none}
 [data-motion="off"].webgl-ready .process-diagram{visibility:visible}
