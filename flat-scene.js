@@ -1,40 +1,41 @@
-// Three SVG compositions are built once; scrolling only crossfades whole layers.
-const root=document.documentElement,ns='http://www.w3.org/2000/svg';
+// Mobile scenes use finite compositor animations. No scroll listener or RAF loop.
+const root=document.documentElement;
 const reduced=matchMedia('(prefers-reduced-motion:reduce)');
-const clamp=x=>Math.max(0,Math.min(1,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
 const glyph=['110110111100','101010100100','101010111100','101010100000','101010100011','000000100011'];
-const letters=[];glyph.forEach((r,y)=>[...r].forEach((v,x)=>{if(v==='1')letters.push([36+x*26,78+y*26])}));
+const scenes=[];
 function make(parent,kind){
- const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 360 310');svg.classList.add('flat-circuit');svg.setAttribute('aria-hidden','true');
- const layers=[0,1,2].map(state=>{
-  const group=document.createElementNS(ns,'g');group.classList.add('flat-frame');group.style.opacity=state===(kind==='signature'?2:1)?1:0;
-  letters.forEach((p,i)=>{const cell=document.createElementNS(ns,'g'),r=document.createElementNS(ns,'rect'),bar=document.createElementNS(ns,'path');const pos=state===0?[30+(i*73%290),40+(i*47%215)]:state===1?[49+(i%7)*40,55+Math.floor(i/7)*36]:p;
-   cell.setAttribute('transform',`translate(${pos[0]} ${pos[1]})`);r.setAttribute('width','20');r.setAttribute('height','20');r.setAttribute('rx','3');bar.setAttribute('d','M4 6H16');cell.append(r,bar);group.append(cell);
-  });svg.append(group);return group;
- });parent.append(svg);return{layers,parent};
+ const scene=document.createElement('div');scene.className='mobile-assembly';scene.dataset.scene=kind;scene.setAttribute('aria-hidden','true');
+ let index=0;
+ glyph.forEach((row,y)=>[...row].forEach((v,x)=>{
+  if(v!=='1')return;
+  const tile=document.createElement('i');tile.className='mobile-module';
+  tile.style.left=`${(36+x*26)/360*100}%`;tile.style.top=`${(52+y*26)/260*100}%`;
+  // Starts are visibly separate; only transform and opacity change during assembly.
+  const direction=index%2?1:-1;
+  tile.style.setProperty('--from-x',`${direction*(40+(index%5)*16)}px`);
+  tile.style.setProperty('--from-y',`${(y-2.5)*27}px`);
+  tile.style.setProperty('--from-turn',`${direction*(8+index%4*5)}deg`);
+  tile.style.setProperty('--delay',`${(x+y)*22}ms`);
+  scene.append(tile);index++;
+ }));parent.append(scene);scenes.push(scene);return scene;
 }
-make(document.querySelector('.process-diagram'),'hero');
-const scene=make(document.querySelector('.film-stage'),'film');
-const signature=document.querySelector('.signature-stage');
-const assembly=document.createElement('div');assembly.className='flat-assembly';assembly.setAttribute('aria-hidden','true');
-const rows=glyph.map((row,y)=>{
- const layer=document.createElement('div');layer.className='flat-row';
- const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 360 310');svg.classList.add('flat-circuit');
- [...row].forEach((v,x)=>{if(v!=='1')return;const cell=document.createElementNS(ns,'g'),rect=document.createElementNS(ns,'rect'),bar=document.createElementNS(ns,'path');cell.setAttribute('transform',`translate(${36+x*26} ${78+y*26})`);rect.setAttribute('width','20');rect.setAttribute('height','20');rect.setAttribute('rx','3');bar.setAttribute('d','M4 6H16');cell.append(rect,bar);svg.append(cell);});
- layer.append(svg);assembly.append(layer);return layer;
-});signature.append(assembly);
-let frame=0,dirty=true,active=false,signatureActive=false,start=0,travel=1,signatureStart=0,signatureTravel=1,last=-1,lastSignature=-1;
-function draw(){
- frame=0;if(document.hidden||root.dataset.motion!=='on'||reduced.matches)return;
- if(dirty){const reel=scene.parent.parentElement;start=reel.getBoundingClientRect().top+scrollY-(parseFloat(getComputedStyle(scene.parent).top)||72);travel=Math.max(1,reel.offsetHeight-scene.parent.offsetHeight);signatureStart=signature.getBoundingClientRect().top+scrollY-innerHeight*.92;signatureTravel=Math.max(1,innerHeight*.64);dirty=false;}
- if(active){const p=clamp((scrollY-start)/travel);if(p!==last){last=p;const a=smooth((p-.2)/.25),b=smooth((p-.65)/.25);[1-a,a*(1-b),b].forEach((opacity,i)=>{scene.layers[i].style.opacity=opacity;});}}
- if(signatureActive){const p=clamp((scrollY-signatureStart)/signatureTravel);if(p!==lastSignature){lastSignature=p;rows.forEach((row,i)=>{const q=smooth((p-i*.055)/.68),offset=1-q;row.style.transform=`translate3d(${(i%2?1:-1)*offset*65}px,${(i-2.5)*offset*20}px,0)`;row.style.opacity=String(.25+.75*q);});}}
+make(document.querySelector('.process-diagram'),'intro');
+make(document.querySelector('.signature-stage'),'signature');
+const hint=document.querySelector('.signature-hint');hint.dataset.ru='МОДУЛИ → ПОДПИСЬ';hint.dataset.en='MODULES → SIGNATURE';hint.textContent=hint.dataset[root.lang==='ru'?'ru':'en'];
+const visible=new Set();
+function play(scene){
+ if(root.dataset.motion!=='on'||reduced.matches||document.hidden)return;
+ scene.classList.add('is-playing');
 }
-function schedule(){if((active||signatureActive)&&!frame)frame=requestAnimationFrame(draw)}
-function measure(){dirty=true;last=-1;lastSignature=-1;schedule()}
-new IntersectionObserver(entries=>{active=entries[0].isIntersecting;if(active)measure();},{rootMargin:'100px'}).observe(scene.parent.parentElement);
-new IntersectionObserver(entries=>{signatureActive=entries[0].isIntersecting;if(signatureActive)measure();},{rootMargin:'100px'}).observe(signature);
-addEventListener('scroll',schedule,{passive:true});addEventListener('resize',measure,{passive:true});
-new ResizeObserver(measure).observe(document.querySelector('main'));
-new MutationObserver(measure).observe(root,{attributes:true,attributeFilter:['lang','data-motion']});
-reduced.addEventListener('change',measure);document.addEventListener('visibilitychange',measure);document.fonts.ready.then(measure);
+const observer=new IntersectionObserver(entries=>{
+ for(const entry of entries){
+  if(entry.isIntersecting){visible.add(entry.target);play(entry.target);}
+  else{visible.delete(entry.target);entry.target.classList.remove('is-playing');}
+ }
+},{threshold:.35});
+scenes.forEach(scene=>observer.observe(scene));
+new MutationObserver(()=>{
+ for(const scene of scenes)if(root.dataset.motion!=='on')scene.classList.remove('is-playing');
+ for(const scene of visible)play(scene);
+}).observe(root,{attributes:true,attributeFilter:['data-motion']});
+reduced.addEventListener('change',()=>{for(const scene of visible)play(scene);});

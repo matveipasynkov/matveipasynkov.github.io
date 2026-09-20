@@ -17,7 +17,7 @@
   const ease = n => { n = clamp(n); return n*n*(3-2*n); };
   function draw(time=0) {
     frame = 0;
-    if (document.hidden || !active || root.dataset.motion !== 'on' || reduced.matches) return;
+    if (document.hidden || !active || root.dataset.motion !== 'on' || reduced.matches || root.classList.contains('flat-ready')) return;
     if (dirty) {
       start = film.getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(stage).top) || 0);
       travel = Math.max(1, film.offsetHeight - stage.offsetHeight);
