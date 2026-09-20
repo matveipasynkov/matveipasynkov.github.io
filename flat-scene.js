@@ -6,10 +6,11 @@ const scenes=[];
 function make(parent,kind){
  const scene=document.createElement('div');scene.className='mobile-assembly';scene.dataset.scene=kind;scene.setAttribute('aria-hidden','true');
  let index=0;
- glyph.forEach((row,y)=>[...row].forEach((v,x)=>{
+ const pattern=kind==='intro'?Array(4).fill('111111'):glyph;
+ pattern.forEach((row,y)=>[...row].forEach((v,x)=>{
   if(v!=='1')return;
   const tile=document.createElement('i');tile.className='mobile-module';
-  tile.style.left=`${(36+x*26)/360*100}%`;tile.style.top=`${(52+y*26)/260*100}%`;
+  tile.style.left=`${(kind==='intro'?80+x*36:36+x*26)/360*100}%`;tile.style.top=`${(kind==='intro'?64+y*38:52+y*26)/260*100}%`;
   // Starts are visibly separate; only transform and opacity change during assembly.
   const direction=index%2?1:-1;
   tile.style.setProperty('--from-x',`${direction*(40+(index%5)*16)}px`);
