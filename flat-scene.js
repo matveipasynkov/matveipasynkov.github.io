@@ -8,7 +8,6 @@ function make(parent,kind){
  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 360 310');svg.classList.add('flat-circuit');svg.setAttribute('aria-hidden','true');
  const layers=[0,1,2].map(state=>{
   const group=document.createElementNS(ns,'g');group.classList.add('flat-frame');group.style.opacity=state===(kind==='signature'?2:1)?1:0;
-  if(state<2){const trace=document.createElementNS(ns,'path');trace.setAttribute('d','M24 65H110V120H240V190H336 M24 245H85V190H190V65H336 M50 30V280 M310 30V280');trace.setAttribute('class','flat-traces');group.append(trace);}
   letters.forEach((p,i)=>{const cell=document.createElementNS(ns,'g'),r=document.createElementNS(ns,'rect'),bar=document.createElementNS(ns,'path');const pos=state===0?[30+(i*73%290),40+(i*47%215)]:state===1?[49+(i%7)*40,55+Math.floor(i/7)*36]:p;
    cell.setAttribute('transform',`translate(${pos[0]} ${pos[1]})`);r.setAttribute('width','20');r.setAttribute('height','20');r.setAttribute('rx','3');bar.setAttribute('d','M4 6H16');cell.append(r,bar);group.append(cell);
   });svg.append(group);return group;
