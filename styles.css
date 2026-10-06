@@ -377,11 +377,12 @@ main{overflow-anchor:none}
 .film-dialog-head h2{font-size:clamp(20px,3vw,34px);line-height:1.2;margin:10px 0 0;letter-spacing:-.045em}
 .film-close{font:inherit;font-size:13px;color:var(--ink);background:none;border:1px solid var(--line);padding:10px 14px;cursor:pointer;white-space:nowrap}
 .film-close:hover{color:var(--acid);border-color:var(--acid)}
-#resume-film{display:block;width:100%;height:auto;aspect-ratio:16/9;background:var(--bg)}
+#resume-film{display:block;width:100%;height:auto;max-height:calc(100dvh - 240px);aspect-ratio:16/9;object-fit:contain;background:var(--bg)}
 .film-dialog-note{color:var(--muted);font-size:13px;line-height:1.5;margin:16px 0 0}
 body:has(.film-dialog[open]){overflow:hidden}
 @media(max-width:780px){.hero-bottom{flex-wrap:wrap}.film-dialog{width:calc(100vw - 24px);padding:12px;max-height:calc(100dvh - 24px)}.film-dialog-head{gap:12px}.film-dialog-head h2{font-size:20px}.film-close{font-size:11px;padding:8px}.film-dialog-note{font-size:12px}}
 @media print{.film-trigger,.film-dialog{display:none}}
+@media(max-width:780px){#resume-film{max-height:calc(100dvh - 200px)}}
 
 /* Keep scrolling, but hide native rails on the page and the film dialog. */
 html,body,.film-dialog{scrollbar-width:none;-ms-overflow-style:none}
