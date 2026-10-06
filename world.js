@@ -69,7 +69,6 @@ function start(){
  const el=s=>document.querySelector(s);
  let filmStart=0,filmDistance=1,signatureStart=0,signatureDistance=1;
  let anchors=[],dirty=true,frame=0,lastTime=0,px=0,py=0,lost=false,renderY=scrollY;
- let heroFraming={x:.78,y:.5,size:1,exit:1};
  // x/y are viewport fractions; form goes cube -> opened -> compressed -> signature.
  function measure(){
   const top=s=>el(s).getBoundingClientRect().top+scrollY;
@@ -86,7 +85,6 @@ function start(){
   const heroSize=Math.min(slot.width*.92,slot.height*.9)*projectionHeight/(3.55*innerHeight*fit);
   const heroX=(slot.left+slot.width*.5)/innerWidth;
   const heroY=(slot.top+scrollY+slot.height*.5)/innerHeight;
-  heroFraming={x:heroX,y:heroY,size:heroSize,exit:filmStart};
   anchors=[
    state(0,0,heroX,heroY,heroSize,1,0),
    state(top('.scroll-film'),.2,.5,.55,1,.32,.45),
@@ -138,11 +136,8 @@ function start(){
   const packed=smooth(form-1)*(1-smooth((form-2)/.4));
   const mono=smooth((form-2.45)/.55);
   let x=get('x'),y=get('y'),size=get('size'),opacity=get('opacity');
-  // Leave the hero in its own layout slot, then join the shared scene below.
-  const handoff=smooth((renderY-(heroFraming.exit-innerHeight*.35))/(innerHeight*.45));
-  x=lerp(heroFraming.x,x,handoff);
-  y=lerp(heroFraming.y-renderY/innerHeight,y,handoff);
-  size=lerp(heroFraming.size,size,handoff);opacity=lerp(1,opacity,handoff);
+  // One viewport-space trajectory carries the hero into the film. Mixing it
+  // with a document-space position made the cube exit upward and rebound.
   x=lerp(x,.5,mechanismWeight);y=lerp(y,.41,mechanismWeight);size=lerp(size,1.05,mechanismWeight);
   if(mobile.matches){const intro=1-smooth(renderY/(innerHeight*.6));x=lerp(lerp(.68,.5,mono),get('x'),intro);size*=lerp(.9,1.1,mono);opacity=lerp(lerp(Math.min(opacity,.3),.9,intro),opacity,smooth((form-2.4)/.35));}
   if(innerHeight<=560&&form<2.55)opacity=Math.min(opacity,.18);
