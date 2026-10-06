@@ -14,7 +14,7 @@ const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,po
 renderer.setSize(W,H,false);renderer.setPixelRatio(1.5);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';renderer.outputColorSpace=T.SRGBColorSpace;
 renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 renderer.setClearColor(bg);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
-const scene=new T.Scene(),camera=new T.PerspectiveCamera(36,W/H,.1,120);
+const scene=new T.Scene();scene.fog=new T.Fog(bg,10,23);const camera=new T.PerspectiveCamera(36,W/H,.1,120);
 const pm=new T.PMREMGenerator(renderer),room=new RoomEnvironment();scene.environment=pm.fromScene(room,.03).texture;room.dispose();pm.dispose();
 try{
  const hdr=await new HDRLoader().loadAsync('../assets/studio-small-09-1k.hdr');
@@ -60,7 +60,7 @@ for(let i=0;i<9;i++){const vent=new T.Mesh(new RoundedBoxGeometry(.017,.11,.58,2
 
 const plate=new T.Mesh(new T.PlaneGeometry(2.95,1.97),new T.MeshBasicMaterial({map:glyph,transparent:true,toneMapped:false}));plate.position.z=.759;hero.add(plate);
 const seam=new T.Mesh(new T.BoxGeometry(3.1,.035,.02),new T.MeshBasicMaterial({color:0xd4fd55}));seam.position.set(0,-1.35,.762);hero.add(seam);
-const papers=new T.Group();scene.add(papers);const sheets=[],maps=[],dataMaps=[],ruleMaps=[];
+const papers=new T.Group();scene.add(papers);const sheets=[],maps=[];
 function sheetMap(i){return texture((q,w,h)=>{
  q.beginPath();q.roundRect(0,0,w,h,26);q.clip();q.fillStyle=i%3===0?'#d4fd55':'#e9eadf';q.fillRect(0,0,w,h);
  q.fillStyle='#15170f';q.font='800 100px Manrope';q.fillText(String(i+1).padStart(2,'0'),95,150);
@@ -69,18 +69,11 @@ function sheetMap(i){return texture((q,w,h)=>{
  for(let j=0;j<5;j++){q.fillStyle=j===2?'#78845a':'#c5c8b9';q.fillRect(95,570+j*85,w-190,32);}
  q.strokeStyle='#828b70';q.lineWidth=4;q.strokeRect(95,h-210,290,110);q.font='600 54px Manrope';q.fillStyle='#15170f';q.fillText('mp.',130,h-140);
  },1100,1500);}
-for(let i=0;i<12;i++){
+for(let i=0;i<6;i++){
  const g=new T.Group();const back=new T.Mesh(new RoundedBoxGeometry(1.7,2.32,.06,6,.03),new T.MeshStandardMaterial({color:i%3===0?0x778d39:0x8c9384,roughness:.65,metalness:.15}));g.add(back);
  const tex=sheetMap(i);maps.push(tex);const front=new T.Mesh(new T.PlaneGeometry(1.64,2.26),new T.MeshStandardMaterial({map:tex,roughness:.82,metalness:0,envMapIntensity:.35,transparent:true}));front.position.z=.031;g.add(front);
  papers.add(g);sheets.push(g);
 }
-const ruleLines=new T.Group();scene.add(ruleLines);
-for(let i=0;i<3;i++){
- const pts=[new T.Vector3(-1.6,(i-1)*1.4,.05),new T.Vector3(0,(i-1)*1.4,.05),new T.Vector3(.6,0,.05),new T.Vector3(2.8,0,.05)];
- ruleLines.add(new T.Line(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0xd4fd55,transparent:true,opacity:.8})));
-}
-const pulses=[];
-for(let i=0;i<9;i++){let dot=new T.Mesh(new T.SphereGeometry(.055,12,12),new T.MeshBasicMaterial({color:0xd4fd55}));ruleLines.add(dot);pulses.push(dot);}
 const proposal=new T.Group();scene.add(proposal);
 const housing=new T.Mesh(new RoundedBoxGeometry(6.8,4.6,.25,8,.15),metal);proposal.add(housing);housing.castShadow=housing.receiveShadow=true;
 const screenWell=new T.Mesh(new RoundedBoxGeometry(6.57,4.37,.025,6,.1),darkMetal);screenWell.position.z=.132;proposal.add(screenWell);
@@ -88,15 +81,6 @@ const rail=new T.Mesh(new RoundedBoxGeometry(5.9,.012,.014,3,.005),edgeMetal);ra
 
 let uiMap;
 const display=new T.Mesh(new T.PlaneGeometry(6.48,4.28),new T.MeshBasicMaterial({toneMapped:false,transparent:true}));display.position.z=.148;proposal.add(display);
-function specialMap(i,rules=false){return texture((q,w,h)=>{
- q.beginPath();q.roundRect(0,0,w,h,26);q.clip();q.fillStyle=rules?'#202719':i%2===0?'#d4fd55':'#e9eadf';q.fillRect(0,0,w,h);
- const col=rules?ink:'#111210';q.fillStyle=col;q.font='800 165px Manrope';q.fillText(String(i+1).padStart(2,'0'),90,220);
- const fields=rules?tx([['Данные','клиента'],['Правила','подбора'],['Подходящие','пакеты']],[['Client','data'],['Selection','rules'],['Suitable','packages']]):tx([['Профиль','компании'],['Потребности','клиента'],['Исходные','данные'],['Условия','подбора'],['Пакеты','услуг'],['Коммерческое','предложение']],[['Company','profile'],['Client','needs'],['Source','data'],['Selection','criteria'],['Service','packages'],['Commercial','proposal']]);
- const lines=fields[i%fields.length];q.font='800 150px Manrope';const width=Math.max(...lines.map(v=>q.measureText(v).width));q.font=`800 ${Math.min(150,150*900/width)}px Manrope`;lines.forEach((v,j)=>q.fillText(v,90,480+j*165));
- q.strokeStyle=rules?acid:'#687640';q.lineWidth=12;
- if(rules){q.beginPath();q.moveTo(260,1030);q.lineTo(440,1200);q.lineTo(810,820);q.stroke();}
- else{for(let j=0;j<4;j++){q.fillStyle=j===0?'#6e8045':'#a3ad87';round(q,90,770+j*125,900-j*100,45,12);q.fill();}}
- },1100,1500);}
 function refreshUI(){
  uiMap?.dispose();uiMap=texture((q,w,h)=>{
  q.beginPath();q.roundRect(0,0,w,h,42);q.clip();q.fillStyle='#171914';q.fillRect(0,0,w,h);
@@ -112,17 +96,25 @@ function refreshUI(){
   q.fillStyle=i===2?'#111210':'#424d30';round(q,x+50,1180,585,110,15);q.fill();q.fillStyle=acid;q.font='800 42px Manrope';q.fillText(i===2?tx('СОБРАТЬ КП →','BUILD PROPOSAL →'):tx('ПРОВЕРЕНО ✓','VERIFIED ✓'),x+90,1250);
  });
  },2400,1600);display.material.map=uiMap;display.material.needsUpdate=true;
- maps.forEach(t=>t.dispose());dataMaps.forEach(t=>t.dispose());ruleMaps.forEach(t=>t.dispose());maps.length=0;dataMaps.length=0;ruleMaps.length=0;sheets.forEach((g,i)=>{let t=sheetMap(i);maps.push(t);dataMaps.push(specialMap(i));ruleMaps.push(specialMap(i,true));g.children[1].material.map=t;});
+ maps.forEach(t=>t.dispose());maps.length=0;sheets.forEach((g,i)=>{const t=sheetMap(i);maps.push(t);g.children[1].material.map=t;});
 }
 refreshUI();
+// One connected set: the camera travels from the source, through the logic,
+// into the builder, then follows the output. No wipes or reset-to-title shots.
+const smoother=x=>{x=clamp(x);return x*x*x*(x*(x*6-15)+10);};
 const cameraKeys=[
- [0,3.8,.9,5,3.2,0,0,-.09],[.55,4,.4,8,3.1,0,0,-.03],[1.6,1.8,.8,16,0,0,0,0],[3.1,2.2,.9,15.5,.1,0,0,0],
- [3.45,5.3,1.8,9.5,3.2,0,0,.10],[4.4,1,1.4,17,0,0,0,0],[6.4,2.7,2,16,.5,0,0,-.035],
- [6.75,3.8,.6,8,3.2,0,0,-.14],[7.55,1.5,.8,17,0,0,0,0],[9.7,2.4,.4,15.8,.1,0,0,0],
- [10.15,4.8,1.8,9,3.2,0,0,.12],[11.1,.8,.5,17,0,0,0,0],[13.6,1.6,1,16,.1,0,0,0],
- [13.95,4.2,.3,8,3.2,0,0,-.10],[14.85,1.2,.5,17,0,0,0,0],[17.2,2.7,.5,15.5,.2,0,0,0],
- [18,3.5,0,7,3.2,0,0,0],[18.7,0,0,17,0,0,0,0],[23.1,0,0,17,0,0,0,0],[24,1.5,.7,17,0,0,0,0],[28,1.5,.7,17,0,0,0,0]];
-// Bounded Hermite curves keep camera speed continuous without overshooting objects.
+ [0,-.7,.6,5.1,0,0,0,-.07],
+ [2.8,-2.2,1.2,9.2,0,.1,0,.02],
+ [5,1.8,2.2,10.2,2.8,.1,-.6,.06],
+ [8,6.4,.7,10.5,6.8,0,-1.9,-.06],
+ [11,10.2,1.5,10.5,10.3,0,-3,.035],
+ [14,16.2,2,8.8,14,0,-4,.025],
+ [17,14.6,.6,6.8,14,0,-4,0],
+ [20,18.7,1.3,11.7,17,0,1.3,-.025],
+ [23,20.8,.8,12.2,18.7,0,3.4,.035],
+ [26,19.5,.4,14.2,18.3,0,3.4,0],
+ [28,19.2,.4,13.7,18.3,0,3.4,0]
+];
 function cameraValue(t,k){
  let i=0;while(i<cameraKeys.length-2&&t>cameraKeys[i+1][0])i++;
  const a=cameraKeys[i],b=cameraKeys[i+1],h=b[0]-a[0],u=clamp((t-a[0])/h),d=(b[k]-a[k])/h;
@@ -134,127 +126,122 @@ function cameraValue(t,k){
  return (2*u**3-3*u**2+1)*a[k]+(u**3-2*u**2+u)*h*m0+(-2*u**3+3*u**2)*b[k]+(u**3-u**2)*h*m1;
 }
 function cameraPose(t){camera.position.set(cameraValue(t,1),cameraValue(t,2),cameraValue(t,3));camera.lookAt(cameraValue(t,4),cameraValue(t,5),cameraValue(t,6));camera.rotateZ(cameraValue(t,7));}
-const smoother=x=>{x=clamp(x);return x*x*x*(x*(x*6-15)+10);};
-function layout(i,s){
- if(s===0)return [(i%4-1.5)*.6,(Math.floor(i/4)-1)*.6,(i%3)*.1,0,0,0,.27];
- if(s===1)return [3.4+Math.sin(i*.52)*2.2,(i%4-1.5)*.38,(i-6)*.22,0,-.5+i*.07,-.5+i*.085,.96];
- if(s===2)return [2.1+(i%2)*2.0,2.05-Math.floor((i%6)/2)*2.0,(i%2)*.12,0,-.13,0,.78];
- if(s===3)return [1.6+(i%3)*2.25,(i%3===1?-.5:.65),0,0,-.12+(i%3)*.12,(i%3-1)*-.055,1.15];
- if(s===4)return [2.3+(i%3)*1.7,(Math.floor(i/3)-1.5)*.4,-1.5-i*.1,0,0,0,.55];
- if(s===5)return [3.3+(i%2)*.035,(i-6)*.035,-1+i*.035,0,0,0,.7];
- return [3.5,(i-6)*.06,-1+i*.035,0,0,0,.7];
+const lid=new T.Group();hero.add(lid);
+for(const m of [faceInset,lip,plate,seam]){hero.remove(m);lid.add(m);}
+const result=new T.Group();scene.add(result);
+const resultBody=new T.Mesh(new RoundedBoxGeometry(2.9,3.95,.095,8,.06),darkMetal);result.add(resultBody);
+let finishedMap;
+function refreshFinished(){
+ finishedMap?.dispose();finishedMap=texture((q,w,h)=>{
+  q.fillStyle='#e9eadf';q.fillRect(0,0,w,h);
+  q.fillStyle='#111210';q.font='800 118px Manrope';q.fillText('mp.',80,160);
+  q.font='800 102px Manrope';q.fillText(tx('Предложение','Proposal'),80,370);
+  q.fillStyle='#647348';q.font='600 48px Manrope';q.fillText(tx('РЕШЕНИЕ ДЛЯ КЛИЕНТА','SOLUTION FOR THE CLIENT'),80,460);
+  q.fillStyle='#d4fd55';q.beginPath();q.roundRect(80,560,w-160,520,28);q.fill();
+  q.strokeStyle='#182013';q.lineWidth=24;q.lineCap='round';q.lineJoin='round';q.beginPath();q.moveTo(350,800);q.lineTo(475,925);q.lineTo(730,685);q.stroke();
+  for(let i=0;i<3;i++){q.fillStyle=i===0?'#404c30':'#b7bfaa';q.fillRect(80,1170+i*74,w-160-i*110,20);}
+ },1100,1500);
 }
-const stages=[0,3.45,6.75,10.15,13.95,18,23.1];
-function cardVisibility(i,stage){return stage===1?1:stage===2?(i<6?1:0):stage===3?(i<3?1:0):0;}
+refreshFinished();
+const backFrame=new T.Mesh(new RoundedBoxGeometry(2.78,3.83,.02,6,.04),metal);backFrame.position.z=-.058;result.add(backFrame);
+const resultFace=new T.Mesh(new T.PlaneGeometry(2.78,3.81),new T.MeshBasicMaterial({map:finishedMap,toneMapped:false}));resultFace.position.z=.05;result.add(resultFace);
+const resultBrand=new T.Mesh(new T.PlaneGeometry(2.65,1.77),new T.MeshBasicMaterial({map:glyph,transparent:true,toneMapped:false,side:T.DoubleSide}));resultBrand.rotation.y=Math.PI;resultBrand.position.z=-.073;result.add(resultBrand);
+// Clock geometry contracts while the completed document remains in view.
+const clock=new T.Group();scene.add(clock);
+const clockMaterial=new T.MeshBasicMaterial({color:0xd4fd55});
+const clockTicks=[];
+for(let i=0;i<60;i++){
+ const a=i*Math.PI/30;const tick=new T.Mesh(new T.BoxGeometry(i%5===0?.055:.028,i%5===0?.24:.13,.045),clockMaterial);
+ tick.position.set(Math.sin(a)*2.85,Math.cos(a)*2.85,0);tick.rotation.z=-a;clock.add(tick);clockTicks.push(tick);
+}
+const clockHand=new T.Mesh(new T.BoxGeometry(.04,2.25,.055),clockMaterial);clockHand.position.y=1.125;
+const handPivot=new T.Group();handPivot.add(clockHand);clock.add(handPivot);
+const paperRight=new T.Vector3(),paperUp=new T.Vector3(),paperNormal=new T.Vector3(),flowCenter=new T.Vector3();
 function cardPose(i,t){
- let stage=0;for(let j=1;j<stages.length;j++)if(t>=stages[j]-.36)stage=j;
- const prev=Math.max(0,stage-1),begin=stages[stage]-.36+i*.018;
- const p=stage===0?1:smoother((t-begin)/(1.05-i*.018));
- const a=layout(i,prev),b=layout(i,stage),values=a.map((v,j)=>lerp(v,b[j],p));
- values[6]=lerp(a[6]*cardVisibility(i,prev),b[6]*cardVisibility(i,stage),p);
- return {stage,prev,p,values};
+ // Fixed row/column identity throughout: no crossings or reordering.
+ const col=i%3-1,row=.5-Math.floor(i/3);
+ const spread=smoother((t-3.15)/2.25),travel=smoother((t-5.4)/8.5),dock=smoother((t-13.8)/2.2);
+ const drift=(1-smoother((t-13.2)/1.8))*spread;
+ const x=(col*2.3+Math.sin(t*.7+col)*.14*drift)*spread,y=(row*2.6+Math.sin(t*.8+col*1.4)*.14*drift)*spread;
+ const position=flowCenter.clone().addScaledVector(paperRight,x).addScaledVector(paperUp,y);
+ // A real layered stack opens into the separated formation.
+ position.addScaledVector(paperNormal,(1-smoother((spread-.85)/.15))*i*.055);
+ position.lerp(new T.Vector3(14+col*2.3,row*1.5,-3.65-i*.007),dock);
+ position.z=Math.max(position.z,-3.25)-.4*smoother((dock-.6)/.4);
+ const scale=lerp(.82,.28,dock)*smoother((t-3.05)/.8)*(1-smoother((t-(16.15+i*.018))/.7));
+ return {position,scale,dock};
 }
 function objectPose(t){
  cameraPose(t);
- hero.position.set(3.5,0,0);hero.rotation.set(.16,lerp(-.85,-.45,smoother(t/3)),.04);
- hero.scale.setScalar(1-smoother((t-3.09)/.72));hero.visible=hero.scale.x>.0001;
- papers.visible=t>3&&t<15;
+ const sourceExit=smoother((t-3.2)/2.0);hero.position.set(-sourceExit*8,-sourceExit*10,-sourceExit*6);hero.rotation.set(.06,-.2+smoother(t/3)*.35,0);
+ const open=smoother((t-2.5)/2.4);lid.position.set(-open*4,open*3.6,open*.7);lid.rotation.x=-open*.27;
+ const travel=smoother((t-5.4)/8.5);
+ flowCenter.set(lerp(.15,cameraValue(t,4),smoother((t-3.15)/2.25)),.45*smoother((t-7)/1.2)*(1-smoother((t-13.8)/2.2)),Math.max(cameraValue(t,6)+lerp(.9,.35,travel),lerp(1.3,-20,smoother((t-5.1)/1.6))));
+ const destinationOrientation=new T.Quaternion();
+ const movingOrientation=camera.quaternion.clone().multiply(new T.Quaternion().setFromEuler(new T.Euler(.025*Math.sin(t*.7),.045*Math.sin(t*.6),.035*Math.sin(t*.5))));
+ paperRight.set(1,0,0).applyQuaternion(movingOrientation);paperUp.set(0,1,0).applyQuaternion(movingOrientation);paperNormal.set(0,0,1).applyQuaternion(movingOrientation);
  sheets.forEach((g,i)=>{
-  const {stage,prev,p,values:v}=cardPose(i,t);
-  g.position.set(v[0],v[1],v[2]);g.rotation.set(v[3],v[4],v[5]);g.scale.setScalar(v[6]);g.visible=v[6]>.0001;
-  const map=s=>s===2?dataMaps[i]:s===3?ruleMaps[i]:maps[i];
-  // Swap lettering only under the full-frame wipe, so two labels never ghost.
-  g.children[1].material.map=map(t<stages[stage]?prev:stage);
+  const p=cardPose(i,t);g.position.copy(p.position);g.quaternion.copy(movingOrientation).slerp(destinationOrientation,p.dock);
+  g.scale.setScalar(p.scale);g.visible=p.scale>.0001;g.children[1].material.map=maps[i];
  });
- const linesIn=smoother((t-10.45)/.75),linesOut=1-smoother((t-13.59)/.72);
- ruleLines.visible=linesIn*linesOut>.001;ruleLines.position.set(3.4,-2.3,.2);ruleLines.scale.setScalar(linesIn*linesOut);
- pulses.forEach((d,i)=>{const p=((t*1.1+i/9)%1);d.position.set(-1.6+p*4.4,(i%3-1)*1.4*(1-smooth((p-.3)/.3)),.05);});
- const toolScale=smoother((t-13.59)/1.05)*(1-smoother((t-17.64)/.72));
- proposal.visible=toolScale>.0001;proposal.position.set(3.2,0,0);proposal.rotation.set(.02,-.18+.035*Math.sin(t*.4),0);proposal.scale.setScalar(toolScale);
+ const toolExit=smoother((t-21.1)/2.3);proposal.position.set(14,-toolExit*10,-4-toolExit*5);proposal.rotation.x=-toolExit*.42;proposal.rotation.set(-toolExit*.42,0,0);proposal.scale.setScalar(1);
+ // The builder already exists at the destination; papers dock into its surface.
+ display.material.opacity=lerp(.12,1,smoother((t-14.4)/2))*(1-.7*smoother((t-18.1)/2.2));
+ const out=smoother((t-17.0)/4.1),turn=smoother((t-23.1)/2.5);
+ result.visible=true;result.position.set(lerp(14,19.3,out),lerp(.1,-.2,out),lerp(-4.24,3.4,out));
+ result.scale.setScalar(lerp(.19,1,out));result.rotation.set(.025*Math.sin(t*.5),lerp(-.15,Math.PI,turn),-.06*(1-turn));
+ resultFace.material.map=finishedMap;
+ clock.position.set(15.7,.05,2.7);clock.scale.setScalar(smoother((t-19)/1.7)*(1-smoother((t-24.3)/1.1)));
+ const saved=smoother((t-20.5)/2.8);
+ clockTicks.forEach((tick,i)=>{const shrink=smoother((saved*60-i)/5);tick.scale.setScalar(i<10?1:1-shrink);});
+ handPivot.rotation.z=-Math.PI*2*saved;
  renderer.render(scene,camera);
 }
-function headline(lines,t0,t,x=145,y=640,size=168,color=ink,maxWidth=1120){
- const fitted=fittedSize(lines,size,maxWidth);
+function envelope(t,from,to,ramp=.65){return smoother((t-from)/ramp)*(1-smoother((t-(to-ramp))/ramp));}
+function caption(lines,t,from,to,x,y,size=145,color=ink,width=2200,align='left'){
+ const alpha=envelope(t,from,to);if(alpha<.001)return;
+ const fitted=fittedSize(lines,size,width);
  if(fitted<size*.75)layoutErrors.add(`Headline too small: ${lines.join(' / ')}`);
- lines.forEach((s,i)=>{
-  const p=smoother((t-t0-i*.07)/.72),baseline=y+i*(size*1.16);
-  c.save();c.globalAlpha=p;
-  text(s,x,baseline+(1-p)*36,fitted,i===lines.length-1?color:ink);c.restore();
- });
+ c.save();c.globalAlpha=alpha;
+ lines.forEach((line,i)=>text(line,x,y+i*size*1.15,fitted,i===lines.length-1?color:ink,800,align));c.restore();
 }
-function sub(s,t0,t,x=150,y=1180,size=45){c.save();c.globalAlpha=smooth((t-t0)/.55);text(s,x,y,size,'#b9bead',600);c.restore();}
 function frame(t){
  objectPose(t);c.drawImage(renderer.domElement,0,0,W,H);
- // All typography is drawn after 3D rendering: no blur, bloom or texture resampling.
- const vignette=c.createLinearGradient(0,0,1600,0);vignette.addColorStop(0,'rgba(17,18,16,.6)');vignette.addColorStop(1,'rgba(17,18,16,0)');c.fillStyle=vignette;c.fillRect(0,0,W,H);
- text('mp.',145,125,65,acid);text(tx('МАТВЕЙ ПАСЫНКОВ','MATVEY PASYNKOV'),2410,110,32,'#c6cabb',600,'right');
- c.strokeStyle='#34382d';c.lineWidth=2;c.beginPath();c.moveTo(145,170);c.lineTo(2410,170);c.stroke();
- if(t<3.45){
-  headline(tx(['Бизнес.','Инженерия.'],['Business.','Engineering.']),.65,t,145,640,176,acid);
-  sub(tx('Превращаю процессы в работающие инструменты.','Turning processes into tools that work.'),1.1,t,150,1120,43);
- }else if(t<6.75){
-  text(tx('01 / РУЧНАЯ ПОДГОТОВКА','01 / MANUAL PREPARATION'),150,290,36,acid,600);
-  headline(['≈60'],3.6,t,125,815,380);text(tx('минут на предложение','minutes per proposal'),150,950,62,ink,600);
-  sub(tx('Данные. Подбор пакета. Сборка документа.','Data. Package selection. Document assembly.'),4,t,150,1170,43);
- }else if(t<10.15){
-  text(tx('02 / ИСХОДНЫЕ ДАННЫЕ','02 / SOURCE DATA'),150,290,36,acid,600);
-  headline(tx(['Данные','клиента.'],['Client','data.']),7.15,t,145,645,185,acid);
-  sub(tx('Собрать нужное. Убрать ручные повторения.','Bring inputs together. Remove repetitive steps.'),7.8,t,150,1170,40);
- }else if(t<13.95){
-  text(tx('03 / ЛОГИКА ПОДБОРА','03 / SELECTION LOGIC'),150,290,36,acid,600);
-  headline(tx(['Правила.','Рекомендации.'],['Rules.','Recommendations.']),10.75,t,145,645,lang==='ru'?133:120,acid);
-  sub(tx('Данные → условия → подходящие пакеты.','Data → conditions → suitable packages.'),11.2,t,150,1170,43);
- }else if(t<18){
-  text(tx('04 / МОЁ РЕШЕНИЕ','04 / MY SOLUTION'),150,290,36,acid,600);
-  headline(tx(['Один','инструмент.'],['One','tool.']),14.7,t,145,630,lang==='ru'?152:185,acid);
-  sub(tx('Конструктор коммерческих предложений.','Commercial proposal builder.'),15,t,150,1160,43);
-
- }else if(t<23.1){
-  const switcher=smoother((t-20)/1.05);
-  c.fillStyle=bg;c.fillRect(0,185,W,1050);
-  text(tx('05 / ВРЕМЯ НА ОДНО ПРЕДЛОЖЕНИЕ','05 / TIME PER PROPOSAL'),150,290,36,acid,600);
-  c.save();c.beginPath();c.rect(120,365,2320,660);c.clip();
-  text('≈60',1280,940-switcher*740,560,ink,800,'center');
-  text('≤10',1280,940+(1-switcher)*740,560,acid,800,'center');c.restore();
-  text(tx('минут','minutes'),1280,1125,68,ink,600,'center');
-  c.fillStyle='#424c30';c.fillRect(640,1200,1280,12);c.fillStyle=acid;c.fillRect(640,1200,lerp(1280,1280/6,switcher),12);
-  text(tx('БЫЛО: ≈ ЧАС','BEFORE: ≈ 1 HOUR'),640,1270,28,'#858d77',600);text(tx('СТАЛО: ДО 10 МИНУТ','AFTER: UP TO 10 MINUTES'),1920,1270,28,acid,600,'right');
- }else if(t<25.4){
-  c.fillStyle=bg;c.fillRect(0,180,W,1260);
-  headline(tx(['Меньше рутины.','Больше времени','на клиента.'],['Less routine.','More time','for the client.']),23.35,t,145,580,lang==='ru'?154:165,acid,2200);
- }else{
-  c.fillStyle=bg;c.fillRect(0,180,W,1260);
-  text('mp.',2050,875,350,acid,800,'center');
-  headline(tx(['Матвей','Пасынков.'],['Matvey','Pasynkov.']),25.55,t,145,635,170,ink);
-  sub(tx('Бизнес-анализ / Оптимизация процессов / AI','Business analysis / Process optimization / AI'),26,t,150,1120,43);
-  text('matveipasynkov.github.io',150,1280,36,acid,600);
+ // Crisp screen-space text accompanies physical actions, with no chapter cards.
+ caption(tx(['Бизнес → инженерия.'],['Business → engineering.']),t,.55,4.5,1280,1260,140,acid,2250,'center');
+ caption(tx(['≈60 минут ручной сборки.'],['≈60 minutes of manual work.']),t,4.0,8.0,1280,185,112,ink,2240,'center');
+ // Words join the route one by one and remain together as the builder emerges.
+ const chain=envelope(t,7.3,17.0,.8);
+ if(chain>.001){
+  const gather=smoother((t-12)/2.3),base=lerp(1090,1280,gather);
+  const labels=tx(['Данные','Правила','Предложение'],['Data','Rules','Proposal']);
+  const positions=[[-800,-45],[-150,0],[760,45]];
+  c.save();c.globalAlpha=chain;
+  labels.forEach((line,i)=>{
+   const a=smoother((t-(7.3+i*1.55))/.8);if(!a)return;
+   c.globalAlpha=chain*a;const x=base+positions[i][0],y=lerp(1300+positions[i][1]*.25,1320,gather);
+   text(line,x,y,108,i===2?acid:ink,800,'center');
+   if(i<2){c.globalAlpha=chain*smoother((t-(8.7+i*1.55))/.6);text('→',base+(i===0?-475:260),lerp(y,1320,gather),90,acid,600,'center');}
+  });c.restore();
  }
- // Scene changes happen at the fully covered midpoint, never on an exposed frame.
- for(const [at,style] of [[3.45,0],[6.75,1],[10.15,2],[13.95,0],[18,1],[23.1,2],[25.4,0]]){
-  const u=(t-(at-.42))/.84;if(u<=0||u>=1)continue;
-  const p=smoother(u);c.save();c.fillStyle=style===1?ink:acid;
-  if(style===0){
-   c.translate(W/2+lerp(-W*1.7,W*1.7,p),H/2);c.rotate(-.12);
-   c.fillRect(-W*.78,-H*1.5,W*1.56,H*3);
-   c.fillStyle=bg;c.fillRect(-W*.78+16,-H*1.5,4,H*3);
-  }else if(style===1){
-   const radius=Math.hypot(W,H)*.7*Math.sin(Math.PI*u)**.7;
-   c.beginPath();c.arc(lerp(W*.42,W*.58,p),H*.5,radius,0,Math.PI*2);c.fill();
-  }else{
-   for(let row=0;row<6;row++){
-    const q=clamp(p+(row-2.5)*.016),x=W/2+lerp(-W*1.85,W*1.85,q);
-    c.fillStyle=row%2?'#c9ed55':acid;c.fillRect(x-W*.78,row*H/6-1,W*1.56,H/6+2);
-   }
-  }
+ caption(tx(['Собрано в один инструмент.'],['Built into one tool.']),t,15.6,19.5,1280,235,128,ink,2280,'center');
+ const comparison=envelope(t,19.5,24.6,.65);
+ if(comparison>.001){
+  c.save();c.globalAlpha=comparison;
+  const saved=smoother((t-20.5)/2.8),minutes=Math.round(60-50*saved);
+  text(saved>.999?'≤10':String(minutes),540,690,320,saved>.999?acid:ink,800,'center');
+  text(tx('минут на предложение','minutes per proposal'),540,805,58,ink,600,'center');
   c.restore();
  }
-
+ caption(tx(['Матвей','Пасынков.'],['Matvey','Pasynkov.']),t,25.3,29,145,650,166,ink,1200);
+ if(t>25.9){c.save();c.globalAlpha=smoother((t-25.9)/.6);text('matveipasynkov.github.io',150,1180,49,acid,600);c.restore();}
 }
-function loop(now){if(!exporting){if(playing){time=Math.min(D,(now-start)/1000);slider.value=time;if(time>=D)playing=false;}frame(time);}requestAnimationFrame(loop);}
+function loop(now){if(!exporting&&playing&&!document.hidden){time=Math.min(D,(now-start)/1000);slider.value=time;frame(time);if(time>=D)playing=false;}requestAnimationFrame(loop);}
+frame(time);
 requestAnimationFrame(loop);
 slider.oninput=()=>{playing=false;time=Number(slider.value);frame(time);status.textContent=`Кадр: ${time.toFixed(1)} сек.`;};
 document.querySelector('#play').onclick=()=>{if(playing){playing=false;return;}if(time>=D)time=0;start=performance.now()-time*1000;playing=true;};
-document.querySelector('#lang').onchange=e=>{lang=e.target.value;refreshUI();frame(time);};
+document.querySelector('#lang').onchange=e=>{lang=e.target.value;refreshUI();refreshFinished();frame(time);};
 document.querySelector('#record').onclick=async()=>{
  if(exporting)return;exporting=true;playing=false;
  try{for(let i=0;i<D*FPS;i++){

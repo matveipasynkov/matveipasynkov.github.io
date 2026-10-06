@@ -436,3 +436,12 @@ main{position:relative;z-index:1}
 [data-motion="on"] .job.visible .job-right li:nth-child(4){animation-delay:.18s}
 [data-motion="on"] .job.visible .job-right li:nth-child(5){animation-delay:.24s}
 @keyframes flow-list{from{opacity:.35;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* The object itself is the control; hold/release adds no panel or visible label. */
+.webgl-ready:not(.flat-ready):not(.legacy-mobile) .process-diagram{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.webgl-ready .process-diagram.is-held{cursor:grabbing}
+.webgl-ready .process-diagram:focus-visible{outline:1px solid var(--acid);outline-offset:10px;border-radius:3px}
+
+.webgl-ready:not(.flat-ready):not(.legacy-mobile)[data-motion="on"] .process-diagram{visibility:visible;background:none;border:0;box-shadow:none;transform:none!important}
+.webgl-ready:not(.flat-ready):not(.legacy-mobile)[data-motion="on"] .process-diagram>*{visibility:hidden}
+.webgl-ready:not(.flat-ready):not(.legacy-mobile)[data-motion="on"] .process-diagram:after{display:none}

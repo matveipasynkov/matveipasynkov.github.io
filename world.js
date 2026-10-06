@@ -7,7 +7,7 @@ import { HDRLoader } from './vendor/HDRLoader.js';
 const root=document.documentElement,reduced=matchMedia('(prefers-reduced-motion: reduce)'),mobile=matchMedia('(max-width:780px)'),coarse=matchMedia('(pointer:coarse)');
 const host=document.createElement('div');host.className='world-viewport';host.setAttribute('aria-hidden','true');document.body.append(host);
 let renderer;
-try{renderer=new THREE.WebGLRenderer({alpha:true,antialias:!(mobile.matches||coarse.matches),powerPreference:'low-power'});}catch(_){host.remove();}
+try{renderer=new THREE.WebGLRenderer({alpha:true,antialias:!(mobile.matches||coarse.matches),powerPreference:'high-performance'});}catch(_){host.remove();}
 if(renderer)start();
 function start(){
  const light=()=>mobile.matches||coarse.matches;
@@ -15,8 +15,8 @@ function start(){
  renderer.localClippingEnabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.append(renderer.domElement);root.classList.add('webgl-ready');
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(36,1,.1,80);camera.position.z=11;
  const studio=new RoomEnvironment(),pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(studio,.04).texture;scene.environmentIntensity=.5;studio.dispose();pmrem.dispose();
- scene.add(new THREE.HemisphereLight(0xe1edee,0x080a0c,.3));
- const key=new THREE.DirectionalLight(0xe8eddd,1.0);key.position.set(-3,5,7);key.castShadow=true;key.shadow.mapSize.set(1536,1536);Object.assign(key.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:.1,far:30});key.shadow.bias=-.0004;key.shadow.normalBias=.015;scene.add(key);
+ scene.add(new THREE.HemisphereLight(0xe1edee,0x080a0c,.45));
+ const key=new THREE.DirectionalLight(0xe8eddd,1.0);key.position.set(-3,5,7);key.castShadow=false;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:.1,far:30});key.shadow.bias=-.0004;key.shadow.normalBias=.015;scene.add(key);
  const rim=new THREE.DirectionalLight(0xd4fd55,1.25);rim.position.set(4,2,-4);scene.add(rim);
  const cool=new THREE.DirectionalLight(0x89938a,.58);cool.position.set(-5,-1,2);scene.add(cool);
  const geometry=new RoundedBoxGeometry(1,1,1,light()?1:3,.045);
@@ -24,7 +24,7 @@ function start(){
  let seed=42;for(let y=0;y<256;y++)for(let x=0;x<256;x++){seed=(seed*1664525+1013904223)>>>0;const n=(seed>>>24)/255,v=150+Math.sin(y*2.1)*7+n*24;const k=(y*256+x)*4;pixels.data[k]=pixels.data[k+1]=pixels.data[k+2]=v;pixels.data[k+3]=255;}ctx.putImageData(pixels,0,0);
  const finish=new THREE.CanvasTexture(surface);finish.wrapS=finish.wrapT=THREE.RepeatWrapping;finish.repeat.set(2,2);finish.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
  const Metal=light()?THREE.MeshStandardMaterial:THREE.MeshPhysicalMaterial;
- const metal=new Metal({color:0x30322d,metalness:.94,roughness:.5,roughnessMap:finish,bumpMap:finish,bumpScale:.0007,...(!light()?{clearcoat:.12,clearcoatRoughness:.34,anisotropy:.32}:{})});
+ const metal=new Metal({color:0x3b4035,metalness:.94,roughness:.44,roughnessMap:finish,bumpMap:finish,bumpScale:.0007,...(!light()?{clearcoat:.12,clearcoatRoughness:.34,anisotropy:.32}:{})});
  const insetMaterial=new THREE.MeshStandardMaterial({color:0x11170f,metalness:.7,roughness:.44});
  const panelMaterial=new THREE.MeshStandardMaterial({color:0x414638,metalness:.84,roughness:.48,roughnessMap:finish,bumpMap:finish,bumpScale:.0005});
  const fastenerMaterial=new THREE.MeshStandardMaterial({color:0x59604f,metalness:1,roughness:.34});
@@ -68,7 +68,25 @@ function start(){
  const targets=Array(60);for(let j=1;j<=60;j++)targets[assignment[j]-1]=destinations[j-1];
  const el=s=>document.querySelector(s);
  let filmStart=0,filmDistance=1,signatureStart=0,signatureDistance=1;
- let anchors=[],dirty=true,frame=0,lastTime=0,px=0,py=0,lost=false,renderY=scrollY;
+ let anchors=[],dirty=true,frame=0,lastTime=0,px=0,py=0,targetPx=0,targetPy=0,pressure=0,targetPressure=0,hover=0,targetHover=0,lost=false,renderY=scrollY;
+ const interaction=document.querySelector('.process-diagram');
+ const haloGeometry=new THREE.BufferGeometry(),haloPositions=new Float32Array(96*3);
+ for(let i=0;i<96;i++){const angle=i*2.39996323,z=1-2*(i+.5)/96,r=Math.sqrt(1-z*z);haloPositions[i*3]=Math.cos(angle)*r*2.65;haloPositions[i*3+1]=z*2.65;haloPositions[i*3+2]=Math.sin(angle)*r*2.65;}
+ haloGeometry.setAttribute('position',new THREE.BufferAttribute(haloPositions,3));
+ const dotCanvas=document.createElement('canvas');dotCanvas.width=dotCanvas.height=32;const dotContext=dotCanvas.getContext('2d');dotContext.fillStyle='white';dotContext.beginPath();dotContext.arc(16,16,12,0,Math.PI*2);dotContext.fill();
+ const halo=new THREE.Points(haloGeometry,new THREE.PointsMaterial({color:0xd4fd55,size:.032,map:new THREE.CanvasTexture(dotCanvas),transparent:true,opacity:0,depthWrite:false,toneMapped:false}));model.add(halo);
+ const release=()=>{targetPressure=0;interaction.classList.remove('is-held');schedule();};
+ const canInteract=()=>!light()&&!reduced.matches&&root.dataset.motion==='on'&&scrollY<innerHeight*.7&&!root.classList.contains('flat-ready');
+ interaction.setAttribute('role','button');interaction.tabIndex=0;
+ const originalLabel=interaction.getAttribute('aria-label');const label=()=>{const enabled=canInteract();interaction.tabIndex=enabled?0:-1;if(enabled)interaction.setAttribute('role','button');else interaction.removeAttribute('role');interaction.setAttribute('aria-label',enabled?(root.lang==='en'?'Interactive cube. Hold to unfold; release to reassemble. Enter toggles the shape.':'Интерактивный куб. Удерживайте, чтобы раскрыть; отпустите, чтобы собрать. Enter переключает форму.'):originalLabel);};label();
+ interaction.addEventListener('pointerenter',()=>{if(canInteract()){targetHover=1;schedule();}});
+ interaction.addEventListener('pointerleave',()=>{targetHover=0;release();});
+ interaction.addEventListener('pointerdown',event=>{if(event.button!==0||!canInteract())return;targetPressure=1;pressure=Math.max(pressure,.16);interaction.classList.add('is-held');interaction.setPointerCapture(event.pointerId);schedule();});
+ interaction.addEventListener('pointerup',release);interaction.addEventListener('pointercancel',release);interaction.addEventListener('lostpointercapture',release);
+ interaction.addEventListener('keydown',event=>{if(event.code==='Escape'){release();return;}if((event.code==='Space'||event.code==='Enter')&&canInteract()){event.preventDefault();if(event.repeat)return;targetPressure=event.code==='Enter'?1-targetPressure:1;interaction.classList.toggle('is-held',!!targetPressure);schedule();}});
+ interaction.addEventListener('keyup',event=>{if(event.code==='Space'){event.preventDefault();release();}});
+ interaction.addEventListener('blur',()=>{targetHover=0;release();});addEventListener('blur',release);
+
  // x/y are viewport fractions; form goes cube -> opened -> compressed -> signature.
  function measure(){
   const top=s=>el(s).getBoundingClientRect().top+scrollY;
@@ -117,7 +135,8 @@ function start(){
  }
  function draw(time=0){
   frame=0;if(document.hidden||lost||(root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;
-  if(light()&&time-lastTime<30){frame=requestAnimationFrame(draw);return}lastTime=time;
+  const dt=Math.min(50,time-lastTime||16);lastTime=time;const began=performance.now();
+  const follow=1-Math.exp(-dt/80);px=lerp(px,targetPx,follow);py=lerp(py,targetPy,follow);hover=lerp(hover,targetHover,1-Math.exp(-dt/120));pressure=lerp(pressure,targetPressure,1-Math.exp(-dt/(targetPressure?460:240)));
   renderY=window.portfolioScroll?.read().y??scrollY;
   if(dirty)measure();
   let index=0;
@@ -132,7 +151,8 @@ function start(){
   const mechanismPhase=smooth((filmP-.035)/.5),mechanismWeight=smooth(filmP/.07)*(1-smooth((filmP-.54)/.08));
   const scanWeight=smooth((filmP-.55)/.06)*(1-smooth((filmP-.96)/.04));
   const scanX=lerp(-3.8,3.8,smooth((filmP-.58)/.22)*(1-smooth((filmP-.84)/.12)));
-  const opened=form<=1?form:form<=2?2-form:Math.sin(Math.min(form-2,.45)*Math.PI)*.65;
+  const interactionWeight=pressure*(1-smooth(renderY/(innerHeight*.7)));
+  const opened=(form<=1?form:form<=2?2-form:Math.sin(Math.min(form-2,.45)*Math.PI)*.65)+interactionWeight*.8;
   const packed=smooth(form-1)*(1-smooth((form-2)/.4));
   const mono=smooth((form-2.45)/.55);
   let x=get('x'),y=get('y'),size=get('size'),opacity=get('opacity');
@@ -143,6 +163,11 @@ function start(){
   if(innerHeight<=560&&form<2.55)opacity=Math.min(opacity,.18);
   opacity=lerp(opacity,light()?.42:.88,filmEnvelope);
   host.style.opacity=String(opacity);
+  const detailed=!light()&&Math.abs(window.portfolioScroll?.read().velocity??0)<.08&&pressure<.02;
+  bolts.visible=detailed;
+  halo.visible=renderY<innerHeight*.7&&(hover+pressure)>.01;
+  halo.material.opacity=(hover*.18+pressure*.52)*(1-smooth(renderY/(innerHeight*.7)));halo.scale.setScalar(1+pressure*.2);halo.rotation.y=pressure*.5;
+  rim.intensity=1.25+interactionWeight*.6;key.position.set(-3+px*3,5-py*2,7);
   camera.position.set(0,0,11);camera.quaternion.identity();
   camera.zoom=1+.12*smooth((form-2.9)/.1);camera.updateProjectionMatrix();
   const halfHeight=11*Math.tan(THREE.MathUtils.degToRad(18)),halfWidth=halfHeight*camera.aspect;
@@ -218,7 +243,7 @@ function start(){
 dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.scale.set(p.sx,p.sy,p.sz);dummy.updateMatrix();blocks.setMatrixAt(i,dummy.matrix);
    for(let col=0;col<4;col++){const m=dummy.matrix.elements;draftColumns[col].setXYZW(i,m[col*4],m[col*4+1],m[col*4+2],m[col*4+3]);}
    dummy.translateZ(p.sz*.5-.001*p.scale);dummy.scale.set(p.sx*.87,p.sy*.78,.018*p.scale);dummy.updateMatrix();panels.setMatrixAt(i,dummy.matrix);
-   if(!light())for(let k=0;k<4;k++){
+   if(detailed)for(let k=0;k<4;k++){
     dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.translateX((k%2?1:-1)*p.sx*.365);dummy.translateY((k<2?1:-1)*p.sy*.31);dummy.translateZ(p.sz*.5+.01*p.scale);dummy.scale.setScalar(.009*p.scale);dummy.updateMatrix();bolts.setMatrixAt(i*4+k,dummy.matrix);
    }
    dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.translateY(p.sy*.13);dummy.translateZ(p.sz*.5+.004*p.scale);
@@ -226,14 +251,16 @@ dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.scale.set(
    dummy.translateZ(.009*p.scale);dummy.scale.set(p.sx*.69,.01*p.scale,.009*p.scale);dummy.updateMatrix();seams.setMatrixAt(i,dummy.matrix);
   }
   for(const column of draftColumns)column.needsUpdate=true;
-  blocks.instanceMatrix.needsUpdate=true;seams.instanceMatrix.needsUpdate=true;insets.instanceMatrix.needsUpdate=true;panels.instanceMatrix.needsUpdate=true;bolts.instanceMatrix.needsUpdate=true;renderer.render(scene,camera);
+  blocks.instanceMatrix.needsUpdate=true;seams.instanceMatrix.needsUpdate=true;insets.instanceMatrix.needsUpdate=true;panels.instanceMatrix.needsUpdate=true;bolts.instanceMatrix.needsUpdate=detailed;renderer.render(scene,camera);
+  host.dataset.cpuMs=(performance.now()-began).toFixed(2);host.dataset.drawCalls=String(renderer.info.render.calls);host.dataset.pressure=pressure.toFixed(3);
+  if(Math.abs(px-targetPx)+Math.abs(py-targetPy)+Math.abs(pressure-targetPressure)+Math.abs(hover-targetHover)>.003)schedule();
  }
  function schedule(){if((root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;if(!frame&&!lost)frame=requestAnimationFrame(draw)}
- function resize(){dirty=true;renderY=scrollY;renderer.setPixelRatio(Math.min(devicePixelRatio,light()?1.25:1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!light();bolts.visible=!light();camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();schedule()}
- document.addEventListener('portfolio-scroll-frame',schedule);addEventListener('scroll',schedule,{passive:true});addEventListener('resize',resize,{passive:true});
- addEventListener('pointermove',e=>{if(light()||root.dataset.motion!=='on'||reduced.matches)return;px=e.clientX/innerWidth-.5;py=e.clientY/innerHeight-.5;schedule()},{passive:true});
+ function resize(){dirty=true;renderY=scrollY;renderer.setPixelRatio(Math.min(devicePixelRatio,light()?1.25:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;bolts.visible=!light();camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();schedule()}
+ document.addEventListener('portfolio-scroll-frame',event=>{if(frame){cancelAnimationFrame(frame);frame=0;}if(scrollY>innerHeight*.7){targetPressure=0;targetHover=0;}draw(event.detail.time);});addEventListener('resize',resize,{passive:true});
+ addEventListener('pointermove',e=>{if(light()||root.dataset.motion!=='on'||reduced.matches)return;targetPx=e.clientX/innerWidth-.5;targetPy=e.clientY/innerHeight-.5;schedule()},{passive:true});
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0}else resize()});
- new MutationObserver(resize).observe(root,{attributes:true,attributeFilter:['data-motion','lang']});
+ new MutationObserver(()=>{label();if(root.dataset.motion!=='on'){pressure=targetPressure=hover=targetHover=0;}resize();}).observe(root,{attributes:true,attributeFilter:['data-motion','lang']});
  reduced.addEventListener('change',resize);coarse.addEventListener('change',resize);
  new ResizeObserver(()=>{dirty=true;schedule()}).observe(document.querySelector('main'));document.fonts?.ready.then(resize);
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;cancelAnimationFrame(frame);frame=0;host.style.visibility='hidden';root.classList.remove('webgl-ready')});
@@ -241,7 +268,7 @@ dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.scale.set(
  resize();
  if(!light())new HDRLoader().load('./assets/studio-small-09-1k.hdr',texture=>{
   const generator=new THREE.PMREMGenerator(renderer),old=scene.environment;
-  scene.environment=generator.fromEquirectangular(texture).texture;scene.environmentIntensity=.7;scene.environmentRotation.y=.45;
+  scene.environment=generator.fromEquirectangular(texture).texture;scene.environmentIntensity=.85;scene.environmentRotation.y=.45;
   old.dispose();texture.dispose();generator.dispose();schedule();
  },undefined,()=>{/* The lightweight studio environment remains usable offline. */});
 }
