@@ -4,21 +4,18 @@ import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
 const root=document.documentElement,sections=[...document.querySelectorAll('.inline-world')];
 const host=document.createElement('div');host.className='inline-canvas';host.setAttribute('aria-hidden','true');document.body.append(host);
-const cursor=document.createElement('div');cursor.className='inline-cursor';cursor.setAttribute('aria-hidden','true');
-cursor.innerHTML='<svg viewBox="0 0 40 40"><path class="cursor-main" d="M6 6 32 17 21 21 17 32Z"/><path class="cursor-detail" d="M24 27v10M19 32h10"/></svg>';document.body.append(cursor);
 const reduced=matchMedia('(prefers-reduced-motion: reduce)'),fine=matchMedia('(pointer:fine)');
 const clamp=x=>Math.max(0,Math.min(1,x)),lerp=(a,b,t)=>a+(b-a)*t;
 let renderer,scene,camera,groups=[],lights=[],frame=0,last=0,time=0,lost=false,dirty=true,activeSection=null;
-let pointer={x:0,y:0,tx:0,ty:0},cursorAngle=0,targetAngle=0,pressed=0,pressTarget=0;
+let pointer={x:0,y:0,tx:0,ty:0},pressed=0,pressTarget=0;
 const views=sections.map(section=>({section,art:section.querySelector('.inline-art'),index:Number(section.dataset.world),visible:false}));
-function clearPointer(){activeSection?.classList.remove('has-pointer');activeSection=null;cursor.classList.remove('has-pointer');pressTarget=0;schedule();}
+function clearPointer(){activeSection?.classList.remove('has-pointer');activeSection=null;pressTarget=0;schedule();}
 for(const view of views){
  const {section,index}=view;
  section.addEventListener('pointermove',e=>{
   if(!fine.matches||root.dataset.motion!=='on'||reduced.matches)return;
-  if(activeSection!==section){activeSection?.classList.remove('has-pointer');activeSection=section;cursor.dataset.world=String(index);cursor.querySelector('.cursor-main').setAttribute('d',index===1?'M6 6H29V11H15L30 26L25 31L11 16V30H6Z':'M6 6 32 17 21 21 17 32Z');}
-  const dx=e.clientX-pointer.tx,dy=e.clientY-pointer.ty;if(Math.abs(dx)+Math.abs(dy)>2)targetAngle=Math.atan2(dy,dx)+Math.PI*.75;
-  pointer.tx=e.clientX;pointer.ty=e.clientY;section.classList.add('has-pointer');cursor.classList.add('has-pointer');schedule();
+  if(activeSection!==section){activeSection?.classList.remove('has-pointer');activeSection=section;}
+  pointer.tx=e.clientX;pointer.ty=e.clientY;section.classList.add('has-pointer');schedule();
  },{passive:true});
  section.addEventListener('pointerleave',clearPointer);
  section.addEventListener('pointerdown',e=>{if(e.button===0&&e.target.closest('.inline-art')&&root.dataset.motion==='on'&&!reduced.matches){pressTarget=1;section.setPointerCapture(e.pointerId);schedule();}});
@@ -95,8 +92,6 @@ function draw(now){
  if(dirty){renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);dirty=false;}
  if(motion)time+=dt*.001;
  const follow=1-Math.exp(-dt/75);pointer.x=lerp(pointer.x,pointer.tx,follow);pointer.y=lerp(pointer.y,pointer.ty,follow);pressed=lerp(pressed,motion?pressTarget:0,follow);
- const delta=Math.atan2(Math.sin(targetAngle-cursorAngle),Math.cos(targetAngle-cursorAngle));cursorAngle+=delta*follow;
- cursor.style.transform=`translate3d(${pointer.x}px,${pointer.y}px,0)`;cursor.querySelector('svg').style.transform=`rotate(${cursorAngle}rad) scale(${1+pressed*.2})`;
  host.style.visibility='visible';renderer.setScissorTest(false);renderer.clear();renderer.setScissorTest(true);
  for(const {section,index,rect,bounds} of visible){
   const g=groups[index],isPointer=activeSection===section;

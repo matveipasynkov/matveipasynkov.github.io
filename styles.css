@@ -470,15 +470,6 @@ html .inline-data h2{font-size:clamp(38px,4.7vw,80px)}
 .inline-metric small{position:absolute;top:100%;left:0;font:500 14px/1.5 var(--font);letter-spacing:0;color:#a9b2a0;white-space:nowrap}
 html .toolkit{padding-top:0;background:none!important}
 html .toolkit-grid{margin-top:0}
-.inline-cursor{position:fixed;left:0;top:0;width:40px;height:40px;margin:-6px 0 0 -6px;pointer-events:none;z-index:80;opacity:0;transition:opacity .15s}
-.inline-cursor.has-pointer{opacity:1}
-.inline-cursor svg{width:40px;height:40px;display:block;transform-origin:6px 6px;overflow:visible}
-.inline-cursor path{stroke:var(--acid);stroke-width:1.25;fill:#d4fd5510;transition:fill .3s,stroke .3s}
-.inline-cursor .cursor-detail{opacity:0;fill:none;transition:opacity .4s}
-.inline-cursor[data-world="1"] .cursor-main{fill:#d4fd5545;stroke:#eaf5de}
-.inline-cursor[data-world="1"] .cursor-detail{opacity:1}
-.inline-cursor[data-world="2"] .cursor-main{fill:var(--acid)}
-@media(pointer:fine){.inline-world.has-pointer{cursor:none}}
 @media(max-width:780px){
  html[data-motion] .inline-stage.film-stage,html[data-motion] .inline-stage.case-screen,.inline-stage{grid-template-columns:1fr;gap:12px;min-height:0;padding-top:60px;padding-bottom:40px}
  html .inline-copy h2{font-size:clamp(42px,10vw,64px);margin-bottom:22px}
@@ -489,10 +480,21 @@ html .toolkit-grid{margin-top:0}
  .inline-metric small{font-size:13px}
  .inline-world::before{mask:linear-gradient(transparent,#000 30%,#000 80%,transparent)}
 }
-@media(prefers-reduced-motion:reduce){.inline-cursor{transition:none}}
+
 
 html .case-cinematic{background:none!important;padding-bottom:90px!important}
 @media(max-width:780px){html .case-cinematic{padding-bottom:60px!important}}
 html[data-motion] .inline-stage.wrap{padding-inline:64px}
 @media(max-width:1100px){html[data-motion] .inline-stage.wrap{padding-inline:36px}}
 @media(max-width:780px){html[data-motion] .inline-stage.wrap{padding-inline:24px}}
+/* One section-aware cursor; native pointers remain available for touch, inputs and pause. */
+.site-cursor{position:fixed;left:-10px;top:-10px;width:50px;height:50px;z-index:110;pointer-events:none;opacity:0;transition:opacity .16s}
+.site-cursor.is-visible{opacity:1}
+.site-cursor svg{width:50px;height:50px;display:block;overflow:visible;transform-origin:10px 10px;transition:scale .24s}
+.site-cursor path{stroke:var(--acid);stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.site-cursor .cursor-detail{fill:none;opacity:0;stroke-width:1}
+.site-cursor.is-action svg{scale:1.12}
+.cursor-action{position:absolute;left:0;top:0;width:20px;height:20px;border:1px solid #d4fd5566;border-radius:50%;opacity:0;scale:.7;transition:opacity .24s,scale .24s}
+.site-cursor.is-action .cursor-action{opacity:1;scale:1}
+@media(pointer:fine){html.has-site-cursor,html.has-site-cursor *{cursor:none!important}}
+@media(prefers-reduced-motion:reduce){.site-cursor{display:none}}

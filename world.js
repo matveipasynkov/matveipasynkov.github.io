@@ -67,7 +67,7 @@ function start(){
  }
  const targets=Array(60);for(let j=1;j<=60;j++)targets[assignment[j]-1]=destinations[j-1];
  const el=s=>document.querySelector(s);
- let filmStart=0,filmDistance=1,signatureStart=0,signatureDistance=1;
+ let signatureStart=0,signatureDistance=1;
  let anchors=[],dirty=true,frame=0,lastTime=0,px=0,py=0,targetPx=0,targetPy=0,pressure=0,targetPressure=0,hover=0,targetHover=0,lost=false,renderY=scrollY;
  const interaction=document.querySelector('.process-diagram');
  const haloGeometry=new THREE.BufferGeometry(),haloPositions=new Float32Array(96*3);
@@ -86,15 +86,13 @@ function start(){
  interaction.addEventListener('keydown',event=>{if(event.code==='Escape'){release();return;}if((event.code==='Space'||event.code==='Enter')&&canInteract()){event.preventDefault();if(event.repeat)return;targetPressure=event.code==='Enter'?1-targetPressure:1;interaction.classList.toggle('is-held',!!targetPressure);schedule();}});
  interaction.addEventListener('keyup',event=>{if(event.code==='Space'){event.preventDefault();release();}});
  interaction.addEventListener('blur',()=>{targetHover=0;release();});addEventListener('blur',release);
+ addEventListener('scroll',()=>{if(pressure||targetPressure){pressure=targetPressure=0;interaction.classList.remove('is-held');}schedule();},{passive:true});
 
  // x/y are viewport fractions; form goes cube -> opened -> compressed -> signature.
  function measure(){
   const top=s=>el(s).getBoundingClientRect().top+scrollY;
-  const film=el('.scroll-film'),reel=el('.case-reel'),sig=el('.signature-reel');
-  const travel=Math.max(1,reel.offsetHeight-innerHeight+86);
-  const inset=parseFloat(getComputedStyle(el('.film-stage')).top)||0;
-  const filmTravel=Math.max(1,film.offsetHeight-el('.film-stage').offsetHeight);
-  filmStart=top('.scroll-film')-inset;filmDistance=filmTravel;signatureStart=top('.signature-reel')-(parseFloat(getComputedStyle(el('.signature-stage')).top)||0);signatureDistance=Math.max(1,sig.offsetHeight-el('.signature-stage').offsetHeight);
+  const sig=el('.signature-reel');
+  signatureStart=top('.signature-reel')-(parseFloat(getComputedStyle(el('.signature-stage')).top)||0);signatureDistance=Math.max(1,sig.offsetHeight-el('.signature-stage').offsetHeight);
   const state=(at,form,x,y,size,opacity,turn)=>({at,form,x,y,size,opacity,turn});
   // Fit the opening object to its reserved layout slot, never to window height alone.
   const slot=el('.process-diagram').getBoundingClientRect();
@@ -105,14 +103,7 @@ function start(){
   const heroY=(slot.top+scrollY+slot.height*.5)/innerHeight;
   anchors=[
    state(0,0,heroX,heroY,heroSize,1,0),
-   state(top('.scroll-film'),.2,.5,.55,1,.32,.45),
-   state(top('.scroll-film')+filmTravel*.65,1,.5,.55,1.1,.3,1.4),
-   state(top('#experience')-innerHeight*.2,1.15,.83,.55,.68,.08,1.8),
-   state(top('.case-reel')-86,0,.78,.55,.78,1,2.1),
-   state(top('.case-reel')-86+travel*.48,1,.78,.55,.85,1,2.6),
-   state(top('.case-reel')-86+travel*.84,2,.78,.55,.78,1,3.1),
-   state(top('.toolkit')-innerHeight*.25,2,.8,.58,.7,.08,3.6),
-   state(top('#about')-innerHeight*.2,2.3,.82,.55,.75,.08,4.1),
+   state(el('.hero').offsetHeight,0,heroX,heroY-1,heroSize,0,0),
    state(top('.signature-reel')-innerHeight*.7,2.5,.65,.55,.85,.45,4.8),
    state(top('.signature-reel')-86,2.65,.5,.55,1,1,5.1),
    state(signatureStart+signatureDistance*.72,3,.5,.5,1,1,Math.PI*2),
@@ -139,20 +130,19 @@ function start(){
   const follow=1-Math.exp(-dt/80);px=lerp(px,targetPx,follow);py=lerp(py,targetPy,follow);hover=lerp(hover,targetHover,1-Math.exp(-dt/120));pressure=lerp(pressure,targetPressure,1-Math.exp(-dt/(targetPressure?460:240)));
   renderY=window.portfolioScroll?.read().y??scrollY;
   if(dirty)measure();
-  const heroEnd=el('.hero').offsetHeight;
-  if(renderY>heroEnd&&renderY<signatureStart-innerHeight*.75){host.style.opacity='0';return;}
+  const heroEnd=el('.hero').offsetHeight,heroView=scrollY<=heroEnd;
+  if(scrollY>heroEnd&&renderY<signatureStart-innerHeight*.75){host.style.opacity='0';return;}
   let index=0;
   while(index<anchors.length-2&&renderY>anchors[index+1].at)index++;
   const a=anchors[index],b=anchors[index+1],t=clamp((renderY-a.at)/Math.max(1,b.at-a.at));
   const get=k=>valueAt(k,index,t);
   const on=root.dataset.motion==='on'&&!reduced.matches;
   if(!on)return;
-  let form=get('form'),turn=get('turn');
-  const filmP=clamp((renderY-filmStart)/filmDistance),signatureP=clamp((renderY-signatureStart)/signatureDistance);
-  const filmEnvelope=0;
-  const mechanismPhase=smooth((filmP-.035)/.5),mechanismWeight=smooth(filmP/.07)*(1-smooth((filmP-.54)/.08));
-  const scanWeight=smooth((filmP-.55)/.06)*(1-smooth((filmP-.96)/.04));
-  const scanX=lerp(-3.8,3.8,smooth((filmP-.58)/.22)*(1-smooth((filmP-.84)/.12)));
+  // Resolve the rigid hero pose before calculating any per-block deformation.
+  // The previous film's form used to leak into these values during scrolling.
+  let form=heroView?0:get('form'),turn=heroView?0:get('turn');
+  const signatureP=clamp((renderY-signatureStart)/signatureDistance);
+  const mechanismWeight=0,mechanismPhase=0,scanWeight=0,scanX=0;
   const interactionWeight=pressure*(1-smooth(renderY/(innerHeight*.7)));
   const opened=(form<=1?form:form<=2?2-form:Math.sin(Math.min(form-2,.45)*Math.PI)*.65)+interactionWeight*.8;
   const packed=smooth(form-1)*(1-smooth((form-2)/.4));
@@ -163,8 +153,7 @@ function start(){
   x=lerp(x,.5,mechanismWeight);y=lerp(y,.41,mechanismWeight);size=lerp(size,1.05,mechanismWeight);
   if(mobile.matches){const intro=1-smooth(renderY/(innerHeight*.6));x=lerp(lerp(.68,.5,mono),get('x'),intro);size*=lerp(.9,1.1,mono);opacity=lerp(lerp(Math.min(opacity,.3),.9,intro),opacity,smooth((form-2.4)/.35));}
   if(innerHeight<=560&&form<2.55)opacity=Math.min(opacity,.18);
-  opacity=lerp(opacity,light()?.42:.88,filmEnvelope);
-  if(renderY<=heroEnd){x=anchors[0].x;y=anchors[0].y-renderY/innerHeight;size=anchors[0].size;opacity=1-smooth(renderY/Math.max(1,heroEnd));form=0;turn=0;}
+  if(heroView){x=anchors[0].x;y=anchors[0].y-scrollY/innerHeight;size=anchors[0].size;opacity=1-smooth(scrollY/Math.max(1,heroEnd));form=0;turn=0;}
   host.style.opacity=String(opacity);
   const detailed=!light()&&Math.abs(window.portfolioScroll?.read().velocity??0)<.08&&pressure<.02;
   bolts.visible=detailed;
@@ -218,7 +207,7 @@ function start(){
   }
   // Perspective bounds of the actual shape, not a large enclosing sphere.
   // This allows a close final shot while every block stays inside the frame.
-  if(y>.14&&y<.94){
+  if(!heroView&&y>.14&&y<.94){
    const tan=Math.tan(THREE.MathUtils.degToRad(18))/camera.zoom;
    const topSafe=(mobile.matches?98:120)/innerHeight;
    const left=(.045*2-1)*tan*camera.aspect,right=(.955*2-1)*tan*camera.aspect;
@@ -255,7 +244,7 @@ dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.scale.set(
   }
   for(const column of draftColumns)column.needsUpdate=true;
   blocks.instanceMatrix.needsUpdate=true;seams.instanceMatrix.needsUpdate=true;insets.instanceMatrix.needsUpdate=true;panels.instanceMatrix.needsUpdate=true;bolts.instanceMatrix.needsUpdate=detailed;renderer.render(scene,camera);
-  host.dataset.cpuMs=(performance.now()-began).toFixed(2);host.dataset.drawCalls=String(renderer.info.render.calls);host.dataset.pressure=pressure.toFixed(3);
+  host.dataset.form=form.toFixed(3);host.dataset.opened=opened.toFixed(3);host.dataset.cpuMs=(performance.now()-began).toFixed(2);host.dataset.drawCalls=String(renderer.info.render.calls);host.dataset.pressure=pressure.toFixed(3);
   if(Math.abs(px-targetPx)+Math.abs(py-targetPy)+Math.abs(pressure-targetPressure)+Math.abs(hover-targetHover)>.003)schedule();
  }
  function schedule(){if((root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;if(!frame&&!lost)frame=requestAnimationFrame(draw)}
