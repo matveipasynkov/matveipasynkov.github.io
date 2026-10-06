@@ -498,3 +498,20 @@ html[data-motion] .inline-stage.wrap{padding-inline:64px}
 .site-cursor.is-action .cursor-action{opacity:1;scale:1}
 @media(pointer:fine){html.has-site-cursor,html.has-site-cursor *{cursor:none!important}}
 @media(prefers-reduced-motion:reduce){.site-cursor{display:none}}
+
+/* Type enters after the object; clipping does not alter glyph metrics or layout. */
+html.inline-ready[data-motion="on"] .inline-world[data-entry] .inline-copy h2{
+ opacity:clamp(0,calc(var(--title-reveal,0)*3),1);
+ clip-path:inset(0 0 calc((1 - var(--title-reveal,0))*100%) 0);
+ transform:translateY(calc((1 - var(--title-reveal,0))*18px));
+}
+html.inline-ready[data-motion="on"] .inline-world[data-entry] .inline-copy p{
+ opacity:var(--body-reveal,0);transform:translateY(calc((1 - var(--body-reveal,0))*16px));
+}
+html.inline-ready[data-motion="on"] .inline-world[data-entry] .inline-metric{
+ opacity:var(--metric-reveal,0);transform:translateY(calc((1 - var(--metric-reveal,0))*14px));
+}
+@media(max-width:780px){.inline-art{grid-row:1}.inline-copy{grid-row:2}}
+@media(prefers-reduced-motion:reduce){
+ html.inline-ready[data-motion="on"] .inline-world[data-entry] .inline-copy :is(h2,p,.inline-metric){opacity:1;clip-path:none;transform:none}
+}
