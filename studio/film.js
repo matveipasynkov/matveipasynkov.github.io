@@ -1,219 +1,201 @@
 import * as T from '../vendor/three.module.min.js';
 import {RoundedBoxGeometry} from '../vendor/RoundedBoxGeometry.js';
 import {RoomEnvironment} from '../vendor/RoomEnvironment.js';
-
 await document.fonts.ready;
-await Promise.all([document.fonts.load('800 170px Manrope'),document.fonts.load('600 48px Manrope'),document.fonts.load('400 45px Manrope')]);
-const W=1920,H=1080,D=26,ACID=0xd4fd55,INK=0xf2f2e9;
-const status=document.querySelector('#status'),slider=document.querySelector('#time');
+await Promise.all([document.fonts.load('800 220px Manrope'),document.fonts.load('600 60px Manrope')]);
+const W=2560,H=1440,D=28,FPS=60,acid='#d4fd55',ink='#f2f2e9',bg='#111210';
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+document.querySelector('#stage').append(canvas);const c=canvas.getContext('2d',{alpha:false});
+const slider=document.querySelector('#time'),status=document.querySelector('#status');
 const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
-renderer.setSize(W,H,false);renderer.setPixelRatio(1);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;
-renderer.setClearColor(0x111210); document.querySelector('#stage').append(renderer.domElement);
-const scene=new T.Scene();scene.fog=new T.Fog(0x111210,26,65);
-const camera=new T.PerspectiveCamera(39,W/H,.1,160);
-const target=new T.WebGLRenderTarget(W,H,{depthBuffer:true});
-const postScene=new T.Scene(),postCamera=new T.OrthographicCamera(-1,1,1,-1,0,1);
-const post=new T.ShaderMaterial({toneMapped:false,uniforms:{image:{value:target.texture},motion:{value:0}},vertexShader:`varying vec2 uvOut;void main(){uvOut=uv;gl_Position=vec4(position.xy,0.,1.);}`,fragmentShader:`
-uniform sampler2D image;uniform float motion;varying vec2 uvOut;
-void main(){
- vec2 uv=uvOut;vec3 c=texture2D(image,uv).rgb;
- vec3 blur=vec3(0.);vec3 bloom=vec3(0.);
- for(int i=0;i<12;i++){
-  float a=float(i)*.523598;vec2 r=vec2(cos(a)/1.777,sin(a));
-  bloom+=max(texture2D(image,uv+r*.008).rgb-vec3(.68),vec3(0.));
-  bloom+=max(texture2D(image,uv+r*.022).rgb-vec3(.75),vec3(0.))*.35;
-  blur+=texture2D(image,uv+vec2((float(i)/11.-.5)*motion*.027,0.)).rgb;
- }
- c=mix(c,blur/12.,motion*.62)+bloom*.025;
- gl_FragColor=vec4(c,1.);
- #include <colorspace_fragment>
-}`});
-postScene.add(new T.Mesh(new T.PlaneGeometry(2,2),post));
-const pm=new T.PMREMGenerator(renderer),room=new RoomEnvironment();scene.environment=pm.fromScene(room,.04).texture;scene.environmentIntensity=.8;room.dispose();pm.dispose();
-scene.add(new T.HemisphereLight(0xf2f2e9,0x111210,1));
-const key=new T.DirectionalLight(0xffffff,3.5);key.position.set(-5,8,12);scene.add(key);
-const rim=new T.DirectionalLight(ACID,3);rim.position.set(5,2,-5);scene.add(rim);
-const cool=new T.DirectionalLight(0xb9c7da,1.3);cool.position.set(-8,-2,6);scene.add(cool);
-const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)},lerp=(a,b,p)=>a+(b-a)*p;
-const clamp=x=>Math.max(0,Math.min(1,x));
-let language='ru',texts=[],groups=[],time=0,playing=false,start=0,recording=false;
-const copy={ru:[
- ['МАТВЕЙ ПАСЫНКОВ',['ПРОЦЕССЫ.','ДАННЫЕ.','РЕЗУЛЬТАТ.'],'БИЗНЕС × ИНЖЕНЕРИЯ'],
- ['01 / АНАЛИЗ',['ПОНЯТЬ','СИСТЕМУ.'],'Процессы. Связи. Точки роста.'],
- ['02 / ГИПОТЕЗА',['ПРОВЕРИТЬ','ИДЕЮ.'],'Гипотеза → прототип → проверка'],
- ['03 / ИНСТРУМЕНТ',['СОБРАТЬ','РЕШЕНИЕ.'],'Конструктор коммерческих предложений'],
- ['КЕЙС / АВТОМАТИЗАЦИЯ',['≈ 60','≤ 10'],'Подготовка предложения: ≈ час → до 10 минут'],
- ['МАТВЕЙ ПАСЫНКОВ',['БИЗНЕС ×','ИНЖЕНЕРИЯ.'],'Меньше рутины. Больше времени на клиента.']],en:[
- ['MATVEY PASYNKOV',['PROCESSES.','DATA.','IMPACT.'],'BUSINESS × ENGINEERING'],
- ['01 / ANALYSIS',['UNDERSTAND','THE SYSTEM.'],'Processes. Connections. Opportunities.'],
- ['02 / HYPOTHESIS',['TEST','THE IDEA.'],'Hypothesis → prototype → validation'],
- ['03 / TOOL',['BUILD','A SOLUTION.'],'Sales proposal builder'],
- ['CASE / AUTOMATION',['≈ 60','≤ 10'],'Proposal preparation: ≈ hour → up to 10 minutes'],
- ['MATVEY PASYNKOV',['BUSINESS ×','ENGINEERING.'],'Less routine. More time for the client.']]};
-function label(text,width,color=INK,weight=800,outline=false){
- const c=document.createElement('canvas'),ctx=c.getContext('2d');c.width=2048;c.height=320;
- const numeric=/^[≈≤\s\d]+$/.test(text),size=numeric?650:weight===800?170:96;
- if(numeric)c.height=800;
- ctx.font=`${weight} ${size}px Manrope,Arial`;const max=ctx.measureText(text).width;
- c.width=Math.min(2048,Math.ceil(max)+64);
- ctx.font=`${weight} ${size}px Manrope,Arial`;ctx.textBaseline='middle';ctx.fillStyle='#'+new T.Color(color).getHexString();ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=2;
- const sx=Math.min(1,(c.width-64)/max);ctx.scale(sx,1);
- if(outline)ctx.strokeText(text,32,c.height/2);else{ctx.strokeStyle='rgba(17,18,16,.72)';ctx.lineWidth=10;ctx.strokeText(text,32,c.height/2);ctx.fillText(text,32,c.height/2);}
- const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
- const mesh=new T.Mesh(new T.PlaneGeometry(width,width*c.height/c.width),new T.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,depthTest:false,toneMapped:false,side:T.DoubleSide}));mesh.renderOrder=10;
- const reveal={value:1};mesh.userData.reveal=reveal;
- mesh.material.onBeforeCompile=shader=>{shader.uniforms.uReveal=reveal;shader.fragmentShader='uniform float uReveal;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\nif(vMapUv.x>uReveal)discard;\nfloat edge=exp(-abs(vMapUv.x-uReveal)*180.);diffuseColor.rgb+=vec3(.15,.24,.015)*edge;');};
- mesh.userData.texture=tex;return mesh;
+renderer.setSize(W,H,false);renderer.setPixelRatio(1);renderer.outputColorSpace=T.SRGBColorSpace;
+renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
+renderer.setClearColor(bg);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+const scene=new T.Scene(),camera=new T.PerspectiveCamera(36,W/H,.1,120);
+const pm=new T.PMREMGenerator(renderer),room=new RoomEnvironment();scene.environment=pm.fromScene(room,.03).texture;room.dispose();pm.dispose();
+scene.environmentIntensity=.65;
+scene.add(new T.HemisphereLight(0xf2f2e9,0x171a10,1.2));
+const key=new T.DirectionalLight(0xffffff,4);key.position.set(-6,10,10);scene.add(key);
+const rim=new T.DirectionalLight(0xd4fd55,2.4);rim.position.set(7,3,-5);scene.add(rim);
+const fill=new T.DirectionalLight(0xdee6df,1.5);fill.position.set(5,-3,8);scene.add(fill);
+const clamp=x=>Math.max(0,Math.min(1,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)},ease=x=>1-Math.pow(1-clamp(x),4),lerp=(a,b,t)=>a+(b-a)*t;
+let lang='ru',time=0,playing=false,start=0,exporting=false;
+const tx=(ru,en)=>lang==='ru'?ru:en;
+function text(s,x,y,size=100,color=ink,weight=800,align='left'){
+ c.fillStyle=color;c.font=`${weight} ${size}px Manrope,Arial`;c.textAlign=align;c.textBaseline='alphabetic';c.fillText(s,x,y);
 }
-function line(points,color=ACID,opacity=.4){return new T.Line(new T.BufferGeometry().setFromPoints(points.map(v=>new T.Vector3(...v))),new T.LineBasicMaterial({color,transparent:true,opacity}));}
-function buildTexts(){
- for(const g of groups){g.traverse(o=>{o.geometry?.dispose();o.userData.texture?.dispose();o.material?.dispose();});scene.remove(g);}groups=[];texts=[];
- for(let s=0;s<6;s++){
-  const g=new T.Group();g.position.x=s*22;scene.add(g);groups.push(g);
-  const [kicker,words,sub]=copy[language][s];
-  const head=label(kicker,4.2,ACID,600);head.position.set(-4.7,3.3,0);g.add(head);
-  words.forEach((word,k)=>{
-   const m=label(word,s===4?7:s===2?(k===0?(language==='en'?9.5:12.5):8):s===3?8.0:s===5?9:8.8,k===words.length-1?ACID:INK,800,s===0&&k===1);
-   m.position.set(s===4?-2.8:s===2?0:s===3?2.8:-2.4,s===2?(k===0?1.75:-1.0):2.0-k*1.65,s===2?.6:0);m.userData.base=m.position.clone();m.userData.stage=s;m.userData.index=k;m.userData.baseScale=m.scale.clone();g.add(m);texts.push(m);
-  });
-  const foot=label(sub,s===0?5.6:11,0xa0a497,400);foot.position.set(s===0?-3.7:0,-3.25,0);g.add(foot);
-  if(s===4){const unit=label(language==='ru'?'МИНУТ НА ПРЕДЛОЖЕНИЕ':'MINUTES PER PROPOSAL',6,ACID,600);unit.position.set(-2.8,-1.5,0);g.add(unit);}
-  const grid=new T.GridHelper(28,42,0x485334,0x282e20);grid.position.set(0,-3.6,-3);grid.material.transparent=true;grid.material.opacity=.3;g.add(grid);
-  g.add(line([[-8,-3.1,0],[8,-3.1,0]],0x566046,.45));
-  const mono=label('mp.',.75,INK);mono.position.set(-7.2,4.15,0);g.add(mono);
- }
+function round(ctx,x,y,w,h,r=20){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+function texture(draw,w=1600,h=1100){const a=document.createElement('canvas');a.width=w;a.height=h;draw(a.getContext('2d'),w,h);const t=new T.CanvasTexture(a);t.colorSpace=T.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t;}
+const glyph=texture((q,w,h)=>{q.fillStyle=acid;q.font='800 790px Manrope';q.textAlign='center';q.textBaseline='middle';q.fillText('mp.',w/2,h/2-50);},1800,1200);
+const metal=new T.MeshPhysicalMaterial({color:0x31352b,metalness:.92,roughness:.24,clearcoat:.7,clearcoatRoughness:.2});
+const hero=new T.Group();scene.add(hero);
+const box=new T.Mesh(new RoundedBoxGeometry(3.4,3.4,1.4,5,.17),metal);hero.add(box);
+const plate=new T.Mesh(new T.PlaneGeometry(2.95,1.97),new T.MeshBasicMaterial({map:glyph,transparent:true,toneMapped:false}));plate.position.z=.72;hero.add(plate);
+const seam=new T.Mesh(new T.BoxGeometry(3.1,.035,.02),new T.MeshBasicMaterial({color:0xd4fd55}));seam.position.set(0,-1.35,.72);hero.add(seam);
+const papers=new T.Group();scene.add(papers);const sheets=[],maps=[],dataMaps=[],ruleMaps=[];
+function sheetMap(i){return texture((q,w,h)=>{
+ q.fillStyle=i%3===0?'#d4fd55':'#e9eadf';q.fillRect(0,0,w,h);
+ q.fillStyle='#15170f';q.font='800 100px Manrope';q.fillText(String(i+1).padStart(2,'0'),95,150);
+ q.fillStyle='#434936';q.font='600 70px Manrope';q.fillText(tx('ДАННЫЕ / ПРЕДЛОЖЕНИЕ','DATA / PROPOSAL'),95,260);
+ q.fillStyle='#111210';q.fillRect(95,350,w*.66,30);q.fillRect(95,420,w*.47,30);
+ for(let j=0;j<5;j++){q.fillStyle=j===2?'#78845a':'#c5c8b9';q.fillRect(95,570+j*85,w-190,32);}
+ q.strokeStyle='#828b70';q.lineWidth=4;q.strokeRect(95,h-210,290,110);q.font='600 54px Manrope';q.fillStyle='#15170f';q.fillText('mp.',130,h-140);
+ },1100,1500);}
+for(let i=0;i<12;i++){
+ const g=new T.Group();const back=new T.Mesh(new RoundedBoxGeometry(1.7,2.32,.045,3,.055),new T.MeshStandardMaterial({color:i%3===0?0xa4bc50:0xa4aa99,roughness:.4,metalness:.35}));g.add(back);
+ const tex=sheetMap(i);maps.push(tex);const front=new T.Mesh(new T.PlaneGeometry(1.64,2.26),new T.MeshBasicMaterial({map:tex,toneMapped:false}));front.position.z=.026;g.add(front);papers.add(g);sheets.push(g);
 }
-buildTexts();
-const model=new T.Group();scene.add(model);
-const geo=new RoundedBoxGeometry(.54,.43,.68,3,.035);
-const metal=new T.MeshPhysicalMaterial({color:0x34372e,metalness:.88,roughness:.3,clearcoat:.5,clearcoatRoughness:.2});
-const inset=new T.MeshStandardMaterial({color:0x151b10,metalness:.75,roughness:.4});
-const seamMat=new T.MeshBasicMaterial({color:ACID,toneMapped:false});
-const modules=[];
-for(let i=0;i<60;i++){
- const block=new T.Group();const shell=new T.Mesh(geo,metal);block.add(shell);
- const panel=new T.Mesh(new RoundedBoxGeometry(.455,.325,.018,2,.012),inset);panel.position.z=.343;block.add(panel);
- const seam=new T.Mesh(new T.BoxGeometry(.36,.009,.012),seamMat);seam.position.set(0,.06,.356);block.add(seam);
- block.userData.base=new T.Vector3((i%4-1.5)*.59,(Math.floor(i/4)%5-2)*.49,(Math.floor(i/20)-1)*.74);
- model.add(block);modules.push(block);
-}
-const glyph=['110110111100','101010100100','101010111100','101010100000','101010100011','000000100011'];const signature=[];
-glyph.forEach((row,y)=>[...row].forEach((v,x)=>{if(v==='1')signature.push(new T.Vector3((x-5.5)*.39,(2.5-y)*.39,0));}));
-const rings=[];
+const ruleLines=new T.Group();scene.add(ruleLines);
 for(let i=0;i<3;i++){
- const pts=[];for(let k=0;k<=128;k++){let a=k/128*Math.PI*2;pts.push([Math.cos(a)*(2.4+i*.5),Math.sin(a)*(2.4+i*.5),0]);}
- const r=line(pts,ACID,i===0?.35:.14);model.add(r);rings.push(r);
+ const pts=[new T.Vector3(-1.6,(i-1)*1.4,.05),new T.Vector3(0,(i-1)*1.4,.05),new T.Vector3(.6,0,.05),new T.Vector3(2.8,0,.05)];
+ ruleLines.add(new T.Line(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0xd4fd55,transparent:true,opacity:.8})));
 }
-const panels=[];
-for(let i=0;i<3;i++){
- const g=new T.Group();scene.add(g);panels.push(g);g.add(line([[-1.4,-.55,0],[1.4,-.55,0],[1.4,.55,0],[-1.4,.55,0],[-1.4,-.55,0]],ACID,.6));
- const text=label(['CLIENT DATA','RULES','PROPOSAL'][i],2.65,INK,600);text.position.z=.02;g.add(text);
-}
-// Camera paths are part of the same scene: rapid traversals connect every chapter.
-const cameras=[
- [0,5.4,.35,4.0,4.3,0,0,.04],
- [0.85,.7,.3,14.8,0,0,0,0],
- [2.0,-.4,.2,13.4,0,0,0,-.035],
- [3.05,.4,.25,14.5,0,0,0,.015],
- [3.65,4.7,.6,3.4,4.4,0,0,-.35],
- [4.2,26.5,.6,4.2,26.4,0,0,.4],
- [4.8,22.8,1.2,15.6,22,0,0,.025],
- [6.0,21.7,.1,13.5,22,0,0,-.025],
- [7.25,22.7,.5,14.9,22,0,0,.025],
- [7.75,26.3,-.3,3.9,26.4,0,0,-.5],
- [8.3,44.6,-.4,14.8,44,0,0,-.035],
- [9.5,43.4,.3,13.6,44,0,0,.018],
- [10.7,44.8,-.15,14.8,44,0,0,-.015],
- [11.6,44,.1,7.5,44,-.8,0,.15],
- [12.2,66+1,.6,14.2,66,0,0,.035],
- [13.4,65.4,-.1,13.5,66,0,0,-.02],
- [14.8,66+.6,.6,15.0,66,0,0,.02],
- [15.55,63.2,.6,4.0,63,0,0,-.45],
- [16.25,88-.6,.4,13.7,88,0,0,.025],
- [17.2,88+.5,-.1,13.2,88,0,0,-.015],
- [18.8,87.7,.5,14.2,88,0,0,.018],
- [20.3,88+.5,.1,13.3,88,0,0,-.01],
- [20.85,92.5,.1,3.8,92.4,0,0,.45],
- [21.4,110+.7,.4,14.2,110,0,0,-.025],
- [22.6,109.5,.1,13.3,110,0,0,.02],
- [24.0,110+.5,.4,14.6,110,0,0,-.015],
- [25.0,110,0,14.0,110,0,0,0],
- [26,110,0,14.0,110,0,0,0]];
-const look=new T.Vector3();
-function pose(t){
- let a=cameras[0],b=cameras[1];for(let i=1;i<cameras.length;i++){b=cameras[i];if(t<=b[0])break;a=b;}
- const cp=clamp((t-a[0])/Math.max(.001,b[0]-a[0]));const p=smooth(cp);const v=k=>lerp(a[k],b[k],p);
- post.uniforms.motion.value=Math.min(1,Math.max(Math.abs(b[4]-a[4])/15,Math.abs(b[3]-a[3])/12))*Math.sin(cp*Math.PI);
- camera.position.set(v(1),v(2),v(3));look.set(v(4),v(5),v(6));camera.lookAt(look);camera.rotateZ(v(7));
- const worldX=v(4);key.position.x=worldX-5;rim.position.x=worldX+5;cool.position.x=worldX-8;
- const stage=Math.min(5,Math.floor((t+.15)/4.2));
- // Object follows the camera's chapter while changing its topology.
- const central=smooth((t-8.1)/.55)*(1-smooth((t-11.7)/.45));
- const opposite=smooth((t-12)/.6)*(1-smooth((t-16)/.45));
- model.position.set(worldX+4.4-central*3.8-opposite*7.4,.1,-central*2.7);
- const explode=smooth((t-3.4)/1.1)*(1-smooth((t-8.1)/1.25));
- const flat=smooth((t-11.8)/1.15)*(1-smooth((t-21)/1.15));
- const mono=smooth((t-21)/1.6);
- model.rotation.set(lerp(.22+Math.sin(t*.3)*.08,0,mono),lerp(-.8+Math.sin(t*.42)*.12,0,mono),lerp(Math.sin(t*.27)*.03,0,mono));
- model.scale.setScalar(lerp(1.45,1.25,mono));
- modules.forEach((m,i)=>{
-  const b=m.userData.base;
-  m.position.copy(b).multiply(new T.Vector3(1+explode*1.8,1+explode*1.4,1+explode*1.7));
-  const panelPos=new T.Vector3((i%10-4.5)*.46,(Math.floor(i/10)-2.5)*.46,0);
-  m.position.lerp(panelPos,flat);
-  const target=signature[i]||new T.Vector3(0,0,-6);m.position.lerp(target,mono);
-  m.rotation.set(explode*.15*Math.sin(i),explode*.22*Math.cos(i),explode*.1*Math.sin(i*.8));
-  m.scale.set(lerp(1,.68,mono),lerp(1,.82,mono),lerp(1,.7,flat));
-  if(i>=signature.length)m.scale.multiplyScalar(1-mono);
+const pulses=[];
+for(let i=0;i<9;i++){let dot=new T.Mesh(new T.SphereGeometry(.055,12,12),new T.MeshBasicMaterial({color:0xd4fd55}));ruleLines.add(dot);pulses.push(dot);}
+const proposal=new T.Group();scene.add(proposal);
+const housing=new T.Mesh(new RoundedBoxGeometry(6.8,4.6,.19,5,.13),metal);proposal.add(housing);
+let uiMap;
+const display=new T.Mesh(new T.PlaneGeometry(6.48,4.28),new T.MeshBasicMaterial({toneMapped:false}));display.position.z=.101;proposal.add(display);
+function specialMap(i,rules=false){return texture((q,w,h)=>{
+ q.fillStyle=rules?'#202719':i%2===0?'#d4fd55':'#e9eadf';q.fillRect(0,0,w,h);
+ const col=rules?ink:'#111210';q.fillStyle=col;q.font='800 165px Manrope';q.fillText(String(i+1).padStart(2,'0'),90,220);
+ const fields=rules?tx([['Данные','клиента'],['Правила','подбора'],['Подходящие','пакеты']],[['Client','data'],['Selection','rules'],['Suitable','packages']]):tx([['Профиль','компании'],['Потребности','клиента'],['Исходные','данные'],['Условия','подбора'],['Пакеты','услуг'],['Коммерческое','предложение']],[['Company','profile'],['Client','needs'],['Source','data'],['Selection','criteria'],['Service','packages'],['Commercial','proposal']]);
+ q.font='800 150px Manrope';fields[i%fields.length].forEach((v,j)=>q.fillText(v,90,480+j*165));
+ q.strokeStyle=rules?acid:'#687640';q.lineWidth=12;
+ if(rules){q.beginPath();q.moveTo(260,1030);q.lineTo(440,1200);q.lineTo(810,820);q.stroke();}
+ else{for(let j=0;j<4;j++){q.fillStyle=j===0?'#6e8045':'#a3ad87';round(q,90,770+j*125,900-j*100,45,12);q.fill();}}
+ },1100,1500);}
+function refreshUI(){
+ uiMap?.dispose();uiMap=texture((q,w,h)=>{
+ q.fillStyle='#171914';q.fillRect(0,0,w,h);
+ q.strokeStyle='#4c5142';q.lineWidth=3;q.beginPath();q.moveTo(0,150);q.lineTo(w,150);q.stroke();
+ q.fillStyle=acid;q.font='800 92px Manrope';q.fillText('mp.',65,110);
+ q.fillStyle=ink;q.font='600 52px Manrope';q.fillText(tx('КОНСТРУКТОР ПРЕДЛОЖЕНИЙ','PROPOSAL BUILDER'),340,100);
+ const cols=[tx('Данные клиента','Client data'),tx('Рекомендации','Recommendations'),tx('Предложение','Proposal')];
+ cols.forEach((s,i)=>{
+  const x=65+i*750;q.fillStyle=i===2?'#d4fd55':'#272c20';round(q,x,215,690,1160,28);q.fill();
+  q.fillStyle=i===2?'#111210':ink;q.font='800 60px Manrope';q.fillText(s,x+50,320);q.font='600 42px Manrope';
+  const labels=i===0?[tx('Профиль компании','Company profile'),tx('Потребности','Needs'),tx('Исходные данные','Source data')]:i===1?[tx('Правила подбора','Selection rules'),tx('Подходящие пакеты','Suitable packages'),tx('Проверка условий','Condition checks')]:[tx('Состав решения','Solution outline'),tx('Подходящие пакеты','Suitable packages'),tx('Готовый документ','Ready document')];
+  labels.forEach((s,j)=>{q.fillStyle=i===2?'#263019':'#c2c8b5';q.fillText(s,x+50,480+j*210);q.fillStyle=i===2?'#a9c449':'#404a30';round(q,x+50,520+j*210,585,100,14);q.fill();q.fillStyle=i===2?'#566b23':'#87976c';q.fillRect(x+80,563+j*210,430-j*60,13);});
+  q.fillStyle=i===2?'#111210':'#424d30';round(q,x+50,1180,585,110,15);q.fill();q.fillStyle=acid;q.font='800 42px Manrope';q.fillText(i===2?tx('СОБРАТЬ КП →','BUILD PROPOSAL →'):tx('ПРОВЕРЕНО ✓','VERIFIED ✓'),x+90,1250);
  });
- rings.forEach((r,i)=>{r.visible=explode>.01;r.rotation.set(.15*explode,i*.6+Math.sin(t*.25)*.1,t*.1*(i%2?-1:1));r.material.opacity=explode*(i===0?.35:.14);});
- texts.forEach(m=>{
-  const s=m.userData.stage,k=m.userData.index,local=t-(s===4?16.25:s*4.2);
-  let arrival=smooth((local+.1-k*.12)/.55);
-  m.position.copy(m.userData.base);m.position.y+=(1-arrival)*.9;
-  m.position.z=m.userData.base.z+(1-arrival)*(s===0?1.3:2.2);
-  m.rotation.y=(1-arrival)*-.2;m.rotation.z=(1-arrival)*.06;
-  m.material.opacity=arrival;
-  m.userData.reveal.value=smooth((local+.15-k*.16)/.7);
-  if(s===0){const arrange=smooth((local-2.2)/.65);m.position.x+=arrange*[1.1,-.35,.55][k];m.position.y-=arrange*k*.12;}
-  // The last word grows into the lens before the camera traverses to the next scene.
-  const punch=smooth((local-3.4)/.45)*(1-smooth((local-4.0)/.35));
-  if(s<4&&k===copy[language][s][1].length-1){
-   m.position.z+=punch*2.7;m.rotation.z-=punch*.035;m.scale.setScalar(1+punch*.23);
-  }else if(s!==4)m.scale.setScalar(1);
-  if(s===4){
-   const switcher=smooth((t-17.85)/.5);
-   m.position.set(-2.0,k===0?1.2+switcher*2.4:1.2-(1-switcher)*2.4,0);
-   m.material.opacity=k===0?1-switcher:switcher;
-   m.scale.setScalar(k===0?1:smooth((t-17.7)/.7)*.3+.7);
-  }
- });
- panels.forEach((g,i)=>{
-  const p=smooth((t-12.3-i*.22)/.55)*(1-smooth((t-16)/.3));
-  g.visible=p>.01;g.position.set(66-5.0+i*3.25,-1.5-(1-p)*.7,.5);g.scale.setScalar(.8+p*.2);
- });
- renderer.setRenderTarget(target);renderer.render(scene,camera);renderer.setRenderTarget(null);renderer.render(postScene,postCamera);
+ },2400,1600);display.material.map=uiMap;display.material.needsUpdate=true;
+ maps.forEach(t=>t.dispose());dataMaps.forEach(t=>t.dispose());ruleMaps.forEach(t=>t.dispose());maps.length=0;dataMaps.length=0;ruleMaps.length=0;sheets.forEach((g,i)=>{let t=sheetMap(i);maps.push(t);dataMaps.push(specialMap(i));ruleMaps.push(specialMap(i,true));g.children[1].material.map=t;});
 }
-function draw(now){
- if(playing){time=Math.min(D,(now-start)/1000);slider.value=time;if(time>=D&&!recording)playing=false;}
- pose(time);requestAnimationFrame(draw);
+refreshUI();
+const cameraKeys=[
+ [0,3.8,.9,5,3.2,0,0,-.09],[.55,4,.4,8,3.1,0,0,-.03],[1.6,1.8,.8,16,0,0,0,0],[3.1,2.2,.9,15.5,.1,0,0,0],
+ [3.8,6,2.5,8.5,3.5,0,0,.14],[4.4,1,1.4,17,0,0,0,0],[6.4,2.7,2,16,.5,0,0,-.035],
+ [7.05,3.8,.2,6.2,3.2,0,0,-.28],[7.55,1.5,.8,17,0,0,0,0],[9.7,2.4,.4,15.8,.1,0,0,0],
+ [10.5,5.5,3,8,3.2,0,0,.22],[11.1,.8,.5,17,0,0,0,0],[13.6,1.6,1,16,.1,0,0,0],
+ [14.25,4.5,.1,5.7,3.3,0,0,-.16],[14.85,1.2,.5,17,0,0,0,0],[17.2,2.7,.5,15.5,.2,0,0,0],
+ [18.25,3.5,0,3.5,3.2,0,0,0],[18.7,0,0,17,0,0,0,0],[23.1,0,0,17,0,0,0,0],[24,1.5,.7,17,0,0,0,0],[28,1.5,.7,17,0,0,0,0]];
+function cameraPose(t){let a=cameraKeys[0],b=a;for(let i=1;i<cameraKeys.length;i++){b=cameraKeys[i];if(t<=b[0])break;a=b;}
+ let p=smooth((t-a[0])/Math.max(.001,b[0]-a[0]));let v=k=>lerp(a[k],b[k],p);
+ camera.position.set(v(1),v(2),v(3));camera.lookAt(v(4),v(5),v(6));camera.rotateZ(v(7));}
+function layout(i,s){
+ if(s===0)return [(i%4-1.5)*.6,(Math.floor(i/4)-1)*.6,(i%3)*.1,0,0,0,.27];
+ if(s===1)return [3.4+Math.sin(i*.52)*2.2,(i%4-1.5)*.38,(i-6)*.22,0,-.5+i*.07,-.5+i*.085,.96];
+ if(s===2)return [2.1+(i%2)*2.0,2.05-Math.floor((i%6)/2)*2.0,(i%2)*.12,0,-.13,0,.78];
+ if(s===3)return [1.6+(i%3)*2.25,(i%3===1?-.5:.65),0,0,-.12+(i%3)*.12,(i%3-1)*-.055,1.15];
+ if(s===4)return [2.3+(i%3)*1.7,(Math.floor(i/3)-1.5)*.4,-1.5-i*.1,0,0,0,.55];
+ if(s===5)return [3.3+(i%2)*.035,(i-6)*.035,-1+i*.035,0,0,0,.7];
+ return [3.5,(i-6)*.06,-1+i*.035,0,0,0,.7];
 }
-requestAnimationFrame(draw);
-slider.addEventListener('input',()=>{playing=false;time=Number(slider.value);status.textContent=`Кадр: ${time.toFixed(1)} сек.`;});
+const stages=[0,3.45,6.75,10.15,13.95,18,23.1];
+function objectPose(t){
+ cameraPose(t);let stage=0;for(let i=1;i<stages.length;i++)if(t>=stages[i])stage=i;
+ const p=ease((t-stages[stage])/.9),prev=Math.max(0,stage-1);
+ hero.visible=t<4;hero.position.set(3.5,0,0);hero.rotation.set(.16,lerp(-.85,-.45,smooth(t/3)),.04);
+ hero.scale.setScalar(1-smooth((t-3.3)/.6));
+ papers.visible=t>3.25&&t<24;
+ sheets.forEach((g,i)=>{const a=layout(i,prev),b=layout(i,stage),delay=clamp(p-i*.015);for(let j=0;j<3;j++)g.position.setComponent(j,lerp(a[j],b[j],delay));
+ g.rotation.set(lerp(a[3],b[3],delay),lerp(a[4],b[4],delay),lerp(a[5],b[5],delay));
+ g.scale.setScalar(lerp(a[6],b[6],delay));
+ if(stage===2&&i>=6)g.scale.multiplyScalar(1-p);
+ if(stage===3&&i>=3)g.scale.multiplyScalar(1-p);
+ const map=stage===2?dataMaps[i]:stage===3?ruleMaps[i]:maps[i];g.children[1].material.map=map;
+ if(stage===1){g.position.y+=Math.sin(t*.7+i)*.05;g.rotation.y+=Math.sin(t*.3+i)*.025;}
+ if(t>13.95)g.scale.multiplyScalar(1-smooth((t-14.1)/.7));
+ });
+ ruleLines.visible=t>10.6&&t<14.25;ruleLines.position.set(3.4,-2.3,.2);ruleLines.scale.setScalar(smooth((t-10.6)/.7));
+ pulses.forEach((d,i)=>{const p=((t*1.1+i/9)%1);d.position.set(-1.6+p*4.4,(i%3-1)*1.4*(1-smooth((p-.3)/.3)),.05);});
+ proposal.visible=t>13.95&&t<18.6;proposal.position.set(3.2,0,0);proposal.rotation.set(.02,-.18+.055*Math.sin(t*.4),0);proposal.scale.setScalar(ease((t-14.1)/.6));
+ renderer.render(scene,camera);
+}
+function headline(lines,t0,t,x=145,y=380,size=168,color=ink){
+ lines.forEach((s,i)=>{const p=ease((t-t0-i*.09)/.65);c.save();c.beginPath();c.rect(x-5,y-size+i*(size*1.16)-10,1400,size*1.23);c.clip();
+ text(s,x,y+i*(size*1.16)+(1-p)*size*1.2,size,i===lines.length-1?color:ink);c.restore();});
+}
+function sub(s,t0,t,x=150,y=1180,size=45){c.save();c.globalAlpha=smooth((t-t0)/.55);text(s,x,y,size,'#b9bead',600);c.restore();}
+function frame(t){
+ objectPose(t);c.drawImage(renderer.domElement,0,0,W,H);
+ // All typography is drawn after 3D rendering: no blur, bloom or texture resampling.
+ const vignette=c.createLinearGradient(0,0,1600,0);vignette.addColorStop(0,'rgba(17,18,16,.6)');vignette.addColorStop(1,'rgba(17,18,16,0)');c.fillStyle=vignette;c.fillRect(0,0,W,H);
+ text('mp.',145,125,65,acid);text(tx('МАТВЕЙ ПАСЫНКОВ','MATVEY PASYNKOV'),2410,110,32,'#c6cabb',600,'right');
+ c.strokeStyle='#34382d';c.lineWidth=2;c.beginPath();c.moveTo(145,170);c.lineTo(2410,170);c.stroke();
+ if(t<3.45){
+  headline(tx(['Бизнес.','Инженерия.'],['Business.','Engineering.']),.65,t,145,640,176,acid);
+  sub(tx('Превращаю процессы в работающие инструменты.','Turning processes into tools that work.'),1.1,t,150,1120,43);
+ }else if(t<6.75){
+  text(tx('01 / РУЧНАЯ ПОДГОТОВКА','01 / MANUAL PREPARATION'),150,290,36,acid,600);
+  headline(['≈60'],3.6,t,125,815,380);text(tx('минут на предложение','minutes per proposal'),150,950,62,ink,600);
+  sub(tx('Данные. Подбор пакета. Сборка документа.','Data. Package selection. Document assembly.'),4,t,150,1170,43);
+ }else if(t<10.15){
+  text(tx('02 / ИСХОДНЫЕ ДАННЫЕ','02 / SOURCE DATA'),150,290,36,acid,600);
+  headline(tx(['Данные','клиента.'],['Client','data.']),7.15,t,145,645,185,acid);
+  sub(tx('Собрать нужное. Убрать ручные повторения.','Bring inputs together. Remove repetitive steps.'),7.8,t,150,1170,40);
+ }else if(t<13.95){
+  text(tx('03 / ЛОГИКА ПОДБОРА','03 / SELECTION LOGIC'),150,290,36,acid,600);
+  headline(tx(['Правила.','Рекомендации.'],['Rules.','Recommendations.']),10.75,t,145,645,lang==='ru'?133:120,acid);
+  sub(tx('Данные → условия → подходящие пакеты.','Data → conditions → suitable packages.'),11.2,t,150,1170,43);
+ }else if(t<18){
+  text(tx('04 / МОЁ РЕШЕНИЕ','04 / MY SOLUTION'),150,290,36,acid,600);
+  headline(tx(['Один','инструмент.'],['One','tool.']),14.7,t,145,630,lang==='ru'?152:185,acid);
+  sub(tx('Конструктор коммерческих предложений.','Commercial proposal builder.'),15,t,150,1160,43);
+  text(tx('СХЕМАТИЧНАЯ ВИЗУАЛИЗАЦИЯ КЕЙСА','SCHEMATIC VISUALIZATION OF THE CASE'),2410,1330,24,'#858d77',600,'right');
+ }else if(t<23.1){
+  const p=smooth((t-18.7)/.8),switcher=ease((t-20)/.9);
+  c.fillStyle=bg;c.fillRect(0,185,W,1050);
+  text(tx('05 / ВРЕМЯ НА ОДНО ПРЕДЛОЖЕНИЕ','05 / TIME PER PROPOSAL'),150,290,36,acid,600);
+  c.save();c.beginPath();c.rect(120,365,2320,660);c.clip();
+  text('≈60',1280,940-switcher*740,560,ink,800,'center');
+  text('≤10',1280,940+(1-switcher)*740,560,acid,800,'center');c.restore();
+  text(tx('минут','minutes'),1280,1125,68,ink,600,'center');
+  c.fillStyle='#424c30';c.fillRect(640,1200,1280,12);c.fillStyle=acid;c.fillRect(640,1200,lerp(1280,1280/6,switcher),12);
+  text(tx('БЫЛО: ≈ ЧАС','BEFORE: ≈ 1 HOUR'),640,1270,28,'#858d77',600);text(tx('СТАЛО: ДО 10 МИНУТ','AFTER: UP TO 10 MINUTES'),1920,1270,28,acid,600,'right');
+ }else if(t<25.4){
+  c.fillStyle=bg;c.fillRect(0,180,W,1260);
+  headline(tx(['Меньше рутины.','Больше времени','на клиента.'],['Less routine.','More time','for the client.']),23.35,t,145,580,lang==='ru'?154:165,acid);
+ }else{
+  c.fillStyle=bg;c.fillRect(0,180,W,1260);
+  text('mp.',2050,875,350,acid,800,'center');
+  headline(tx(['Матвей','Пасынков.'],['Matvey','Pasynkov.']),25.55,t,145,635,170,ink);
+  sub(tx('Бизнес-анализ / Оптимизация процессов / AI','Business analysis / Process optimization / AI'),26,t,150,1120,43);
+  text('matveipasynkov.github.io',150,1280,36,acid,600);
+ }
+ // Graphic match cuts: a sheet edge, rule line, then document becoming the next shot.
+ for(const [at,style] of [[3.45,0],[6.75,1],[10.15,2],[13.95,0],[18,1],[23.1,2],[25.4,0]]){
+  const u=(t-at)/.5;if(u<0||u>1)continue;
+  c.save();const k=Math.sin(u*Math.PI);c.fillStyle=style===1?ink:acid;
+  if(style===0){c.translate(W/2,H/2);c.rotate(-.16);c.fillRect(-W*1.1+u*W*2.2,-H*1.5,W*.72,H*3);}
+  else if(style===1){c.translate(W/2,H/2);c.scale(1,k);c.fillRect(-W/2,-H/2,W,H);}
+  else{const x=lerp(-W*.7,W*1.2,u);c.translate(x,H/2);c.rotate(-.45);c.fillRect(0,-H*2,W*.48,H*4);}
+  c.restore();
+ }
+}
+function loop(now){if(!exporting){if(playing){time=Math.min(D,(now-start)/1000);slider.value=time;if(time>=D)playing=false;}frame(time);}requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+slider.oninput=()=>{playing=false;time=Number(slider.value);frame(time);status.textContent=`Кадр: ${time.toFixed(1)} сек.`;};
 document.querySelector('#play').onclick=()=>{if(playing){playing=false;return;}if(time>=D)time=0;start=performance.now()-time*1000;playing=true;};
-document.querySelector('#lang').onchange=e=>{language=e.target.value;buildTexts();};
+document.querySelector('#lang').onchange=e=>{lang=e.target.value;refreshUI();frame(time);};
 document.querySelector('#record').onclick=async()=>{
- if(recording)return;recording=true;time=0;pose(0);
- const formats=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4'];const mimeType=formats.find(f=>MediaRecorder.isTypeSupported(f));
- if(!mimeType){status.textContent='Этот браузер не поддерживает запись canvas';recording=false;return;}
- const stream=renderer.domElement.captureStream(30);const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:16_000_000});const chunks=[];
- recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
- recorder.onstop=async()=>{
-  playing=false;recording=false;stream.getTracks().forEach(t=>t.stop());
-  status.textContent='Сохраняю запись…';const response=await fetch(`/studio/render-${language}`,{method:'POST',body:new Blob(chunks,{type:mimeType})});
-  status.textContent=response.ok?`ГОТОВО / ${language.toUpperCase()} / ${mimeType}`:'Не удалось сохранить запись';
- };
- recorder.start();start=performance.now();playing=true;status.textContent=`ЗАПИСЬ / ${language.toUpperCase()} / ${mimeType}`;
- setTimeout(()=>recorder.stop(),D*1000+150);
+ if(exporting)return;exporting=true;playing=false;
+ try{for(let i=0;i<D*FPS;i++){
+  time=i/FPS;frame(time);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.98));
+  const r=await fetch(`/studio/frame-${lang}/${String(i).padStart(5,'0')}`,{method:'POST',body:blob});if(!r.ok)throw Error(`Frame ${i}`);
+  if(i%30===0){slider.value=time;status.textContent=`ЭКСПОРТ ${lang.toUpperCase()} / ${Math.round(i/(D*FPS)*100)}% / ${i} кадров`;}
+ }status.textContent=`ГОТОВО / ${lang.toUpperCase()} / ${D*FPS} кадров / ${W}×${H}`;
+ }catch(e){status.textContent=`Ошибка: ${e.message}`;}finally{exporting=false;}
 };
-status.textContent='ГОТОВО / WebGL / 1920×1080';
+status.textContent='ГОТОВО / 2560×1440 / 60 fps / Чёткая типографика';
