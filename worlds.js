@@ -135,10 +135,10 @@ function draw(now){
  dialog.style.setProperty('--light-x',`${pointer.x*100}%`);dialog.style.setProperty('--light-y',`${pointer.y*100}%`);
  if(renderer){
   const small=innerWidth<780,aspect=innerWidth/innerHeight,half=8.8*Math.tan(THREE.MathUtils.degToRad(17));
-  const objectOffset=small?0:half*aspect*.34,vertical=small?(active===2?1.65:.95):0;
+  const objectOffset=small?0:half*aspect*.43,vertical=small?(active===2?1.65:.95):0;
   camera.position.set(travel-objectOffset,vertical,8.8+(1-entrance)*5.5);
   camera.lookAt(travel-objectOffset,vertical,0);
-  groups.forEach((g,i)=>{const proximity=clamp(1-Math.abs(travel-i*14)/12);g.visible=proximity>0;g.scale.setScalar((small?(active===2?(innerHeight<720?.38:.5):.55):1)*( .82+.18*proximity));g.rotation.set((pointer.y-.5)*.23,Math.sin(time*.14)*.09+(pointer.x-.5)*.26+(1-entrance)*.9,(pointer.x-.5)*.035);if(i===0)g.rotation.z+=Math.sin(time*.13)*.08;if(i===2){g.rotation.y-=.32;g.children.slice(0,6).forEach((p,j)=>{p.position.z=(j-2.5)*(.24+pressed*.13);});g.userData.lettering.position.z=g.children[5].position.z+.08;}});
+  groups.forEach((g,i)=>{const proximity=clamp(1-Math.abs(travel-i*14)/12);g.visible=proximity>0;g.scale.setScalar((small?(active===2?(innerHeight<720?.38:.5):.55):Math.min(1,aspect/1.7))*( .82+.18*proximity));g.rotation.set((pointer.y-.5)*.23,Math.sin(time*.14)*.09+(pointer.x-.5)*.26+(1-entrance)*.9,(pointer.x-.5)*.035);if(i===0)g.rotation.z+=Math.sin(time*.13)*.08;if(i===2){g.rotation.y-=.32;g.children.slice(0,6).forEach((p,j)=>{p.position.z=(j-2.5)*(.24+pressed*.13);});g.userData.lettering.position.z=g.children[5].position.z+.08;}});
   const beam=new THREE.Vector3((pointer.x-.5)*half*aspect*2+camera.position.x,(.5-pointer.y)*half*2+camera.position.y,2.8);
   lights[2].position.copy(beam);lights[2].intensity=pointer.inside?26+pressed*18:8;
   lights[0].position.set(travel-3+(pointer.x-.5)*3,4-(pointer.y-.5)*2,5);

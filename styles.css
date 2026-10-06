@@ -507,7 +507,7 @@ body:has(.explore[open]){overflow:hidden}
  .explore-metric{font-size:38px;margin-top:18px;margin-bottom:24px}
  .explore-fallback .explore-canvas{left:0;top:45%}
 }
-@media(max-height:600px) and (min-width:781px){.explore-copy{top:46%}.explore-copy h2{font-size:54px;margin-bottom:18px}.explore-description{font-size:14px;max-width:38ch}.explore-count{margin-bottom:14px}.explore-detail{margin-top:16px}.explore[data-world="1"] h2{font-size:48px}.explore[data-world="2"] .explore-copy{top:49%}.explore-metric{font-size:36px;margin:16px 0 20px}.explore-head{top:18px}.explore-nav{bottom:20px}}
+@media(max-height:600px) and (min-width:781px){.explore-copy{top:46%}.explore-copy h2{font-size:54px;margin-bottom:18px}.explore-description{font-size:14px;max-width:38ch}.explore-count{margin-bottom:14px}.explore-detail{margin-top:16px}.explore[data-world="1"] h2{font-size:clamp(38px,4.4vw,48px)}.explore[data-world="2"] .explore-copy{top:49%}.explore-metric{font-size:36px;margin:16px 0 20px}.explore-head{top:18px}.explore-nav{bottom:20px}}
 @media(prefers-reduced-motion:reduce){.explore *{animation:none!important;transition:none!important}}
 /* A single quiet progress line, synchronized with the shared page clock. */
 .page-progress{position:fixed;top:0;left:0;width:100%;height:3px;background:var(--acid);transform:scaleX(0);transform-origin:left;z-index:100;pointer-events:none}
