@@ -16,6 +16,8 @@ The scroll narrative uses one WebGL canvas, bounded perspective framing and redu
 
 ## Video introduction
 
-The opt-in 24-second film in `#intro-film` has Russian and English versions. It follows the existing graphite/acid design and uses a 4×5×3 modular cube to illustrate analysis, prototyping, tools and the proposal-builder case. No autoplay or audio. Switching language changes the movie; the shared pause control pauses it.
+The opt-in 26-second 1080p film in `#intro-film` has Russian and English versions. Its typography uses Manrope and the site's graphite/acid palette. One Three.js scene carries the modular cube through camera traversals, exploded views, type reveals, prototype panels, the proposal-builder result and the mp. signature. Camera passes and lettering create the transitions; a shader adds bloom and directional motion blur. No autoplay or audio.
 
-Regenerate with `python tools/render-film.py` (Pillow, NumPy, ffmpeg; the current font paths target macOS). Copy, palette, timing and geometry are defined separately in that file. Rendered H.264 files and posters are checked into `assets/`; GitHub Pages requires no build step.
+Source: `studio/film.js`. Run `python studio/server.py`, open `http://127.0.0.1:8765/studio/`, and use the record button for each language. This records the WebGL canvas at 1920×1080. Convert the local `assets/cinema-ru.webm` and `assets/cinema-en.webm` captures with ffmpeg to H.264, 30 fps, 26 seconds, yuv420p and faststart. Captures are ignored by Git. The final movies and posters use the `resume-cinema-*` names. The original Python renderer remains available as an earlier study.
+
+The language switch keeps the selected movie synchronized with the page; the shared pause control pauses it. GitHub Pages requires no build step.

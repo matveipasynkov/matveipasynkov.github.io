@@ -10,10 +10,10 @@
       const playing = !video.paused;
       language = next;
       video.pause();
-      video.poster = `assets/resume-film-${next}.jpg`;
-      video.querySelector('source').src = `assets/resume-film-${next}.mp4`;
+      video.poster = `assets/resume-cinema-${next}.jpg`;
+      video.querySelector('source').src = `assets/resume-cinema-${next}.mp4`;
       video.addEventListener('loadedmetadata', () => {
-        video.currentTime = Math.min(time, video.duration || 24);
+        video.currentTime = Math.min(time, video.duration || 26);
         if (playing && !document.hidden) video.play().catch(() => {});
       }, { once: true });
       video.load();
