@@ -2,7 +2,7 @@
 (() => {
  const root=document.documentElement, reel=document.querySelector('.case-reel'), screen=reel.querySelector('.case-screen');
  const shots=[...reel.querySelectorAll('.case-shot')], nodes=[...reel.querySelectorAll('.case-flow-node')];
- const track=reel.querySelector('.case-track i'), counter=reel.querySelector('.case-position'), scan=reel.querySelector('.case-scan');
+ const steps=[...reel.querySelectorAll('.scene-steps span')], scan=reel.querySelector('.case-scan');
  let frame=0, dirty=true, active=true, start=0, travel=1, previous=-1;
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  const clamp=x=>Math.max(0,Math.min(1,x));
@@ -19,9 +19,9 @@
    el.style.transform=`translate3d(${leave*-7}%,${(1-enter)*45}px,0) scale(${1+(1-enter)*.08-leave*.12})`;
   });
   nodes.forEach((el,i)=>{const q=smooth((p-.34-i*.055)/.09);el.style.opacity=.2+.8*q;el.style.transform=`translateX(${(1-q)*12}px)`});
-  track.style.transform=`scaleX(${p})`;
   scan.style.transform=`translateX(${p*110-5}%)`;
-  const label=p<.29?'01 / 03':p<.69?'02 / 03':'03 / 03';if(counter.textContent!==label)counter.textContent=label;
+  const current=opacity.indexOf(Math.max(...opacity));
+  steps.forEach((step,i)=>step.classList.toggle('is-active',i===current));
  }
  function schedule(){if(!frame)frame=requestAnimationFrame(draw)}
  function measure(){dirty=true;schedule()}

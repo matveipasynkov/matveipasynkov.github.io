@@ -9,10 +9,6 @@
   const pending = new Map();
   const surfaces = [...document.querySelectorAll('.process-diagram, .award-feature, .primary, .contact-title')];
   const hero = document.querySelector('.hero');
-  const progress = document.createElement('div');
-  progress.className = 'reading-progress';
-  progress.setAttribute('aria-hidden', 'true');
-  document.body.append(progress);
   try { paused = localStorage.getItem('mp-motion') === 'paused'; } catch (_) {}
   const enabled = () => !paused && !reduced.matches;
   function label() {
@@ -41,9 +37,6 @@
   }
   function render() {
     frame = 0;
-    const extent = root.scrollHeight - window.innerHeight;
-    const scroll = extent > 0 ? Math.min(1, Math.max(0, window.scrollY / extent)) : 0;
-    progress.style.transform = `scaleX(${scroll})`;
     if (!enabled() || document.hidden || root.classList.contains('flat-ready')) { pending.clear(); return; }
     hero.style.setProperty('--hero-shift', `${Math.min(window.scrollY, 650) * 0.055}px`);
     // Read geometry together before updating any surface styles.
@@ -113,6 +106,7 @@
         }
       });
     }, {threshold:0.08});
+    document.querySelectorAll('.section-heading,.case-heading,.toolkit-heading,.contact-top').forEach(el => el.classList.add('reveal'));
     document.querySelectorAll('.reveal').forEach(el => reveal.observe(el));
     root.classList.add('js-motion');
     const activity = new IntersectionObserver(entries => {

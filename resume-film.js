@@ -10,7 +10,7 @@
  trigger.addEventListener('click',()=>{dialog.showModal();video.volume=.45;video.play().catch(()=>{});});
  document.querySelector('.film-close').addEventListener('click',()=>dialog.close());
  dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
- dialog.addEventListener('close',()=>{video.pause();trigger.focus();});
+ dialog.addEventListener('close',()=>{video.pause();trigger.focus({preventScroll:true});});
  document.addEventListener('visibilitychange',()=>{if(document.hidden)video.pause();});
  new MutationObserver(update).observe(root,{attributes:true,attributeFilter:['lang','data-motion']});update();
  if(location.hash==='#intro-film')dialog.showModal();

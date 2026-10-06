@@ -69,6 +69,7 @@ function start(){
  const el=s=>document.querySelector(s);
  let filmStart=0,filmDistance=1,signatureStart=0,signatureDistance=1;
  let anchors=[],dirty=true,frame=0,lastTime=0,px=0,py=0,lost=false,renderY=scrollY;
+ let heroFraming={x:.78,y:.5,size:1,exit:1};
  // x/y are viewport fractions; form goes cube -> opened -> compressed -> signature.
  function measure(){
   const top=s=>el(s).getBoundingClientRect().top+scrollY;
@@ -85,6 +86,7 @@ function start(){
   const heroSize=Math.min(slot.width*.92,slot.height*.9)*projectionHeight/(3.55*innerHeight*fit);
   const heroX=(slot.left+slot.width*.5)/innerWidth;
   const heroY=(slot.top+scrollY+slot.height*.5)/innerHeight;
+  heroFraming={x:heroX,y:heroY,size:heroSize,exit:filmStart};
   anchors=[
    state(0,0,heroX,heroY,heroSize,1,0),
    state(top('.scroll-film'),.2,.5,.55,1,.32,.45),
@@ -103,15 +105,27 @@ function start(){
   ].sort((a,b)=>a.at-b.at);
   dirty=false;
  }
+ // Monotone cubic interpolation keeps velocity continuous at chapter boundaries.
+ function valueAt(key,index,t){
+  const a=anchors[index],b=anchors[index+1]||a,h=Math.max(1,b.at-a.at),d=(b[key]-a[key])/h;
+  const before=anchors[index-1],after=anchors[index+2];
+  const dl=before?(a[key]-before[key])/Math.max(1,a.at-before.at):d;
+  const dr=after?(after[key]-b[key])/Math.max(1,after.at-b.at):d;
+  const tangent=(u,v)=>u*v>0?2*u*v/(u+v):0;
+  let m0=tangent(dl,d),m1=tangent(d,dr);
+  if(d===0)m0=m1=0;
+  else{const sum=(m0/d)**2+(m1/d)**2;if(sum>9){const limit=3/Math.sqrt(sum);m0*=limit;m1*=limit;}}
+  return (2*t**3-3*t**2+1)*a[key]+(t**3-2*t**2+t)*h*m0+(-2*t**3+3*t**2)*b[key]+(t**3-t**2)*h*m1;
+ }
  function draw(time=0){
   frame=0;if(document.hidden||lost||(root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;
   if(light()&&time-lastTime<30){frame=requestAnimationFrame(draw);return}const dt=Math.min(50,time-lastTime||16);lastTime=time;
   renderY+=(scrollY-renderY)*(1-Math.exp(-dt/75));if(Math.abs(scrollY-renderY)<.1)renderY=scrollY;
   if(dirty)measure();
-  let a=anchors[0],b=a;
-  for(let i=1;i<anchors.length;i++){b=anchors[i];if(renderY<=b.at)break;a=b;}
-  const t=smooth((renderY-a.at)/Math.max(1,b.at-a.at));
-  const get=k=>lerp(a[k],b[k],t);
+  let index=0;
+  while(index<anchors.length-2&&renderY>anchors[index+1].at)index++;
+  const a=anchors[index],b=anchors[index+1],t=clamp((renderY-a.at)/Math.max(1,b.at-a.at));
+  const get=k=>valueAt(k,index,t);
   const on=root.dataset.motion==='on'&&!reduced.matches;
   if(!on)return;
   let form=get('form'),turn=get('turn');
@@ -124,6 +138,11 @@ function start(){
   const packed=smooth(form-1)*(1-smooth((form-2)/.4));
   const mono=smooth((form-2.45)/.55);
   let x=get('x'),y=get('y'),size=get('size'),opacity=get('opacity');
+  // Leave the hero in its own layout slot, then join the shared scene below.
+  const handoff=smooth((renderY-(heroFraming.exit-innerHeight*.35))/(innerHeight*.45));
+  x=lerp(heroFraming.x,x,handoff);
+  y=lerp(heroFraming.y-renderY/innerHeight,y,handoff);
+  size=lerp(heroFraming.size,size,handoff);opacity=lerp(1,opacity,handoff);
   x=lerp(x,.5,mechanismWeight);y=lerp(y,.41,mechanismWeight);size=lerp(size,1.05,mechanismWeight);
   if(mobile.matches){const intro=1-smooth(renderY/(innerHeight*.6));x=lerp(lerp(.68,.5,mono),get('x'),intro);size*=lerp(.9,1.1,mono);opacity=lerp(lerp(Math.min(opacity,.3),.9,intro),opacity,smooth((form-2.4)/.35));}
   if(innerHeight<=560&&form<2.55)opacity=Math.min(opacity,.18);

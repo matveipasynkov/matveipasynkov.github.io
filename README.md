@@ -25,3 +25,5 @@ The film shows the proposal-builder case: manual preparation, client data, recom
 To render: run `python studio/server.py`, open `http://127.0.0.1:8765/studio/`, select a language and click **Экспорт кадров**. JPEG frames are written outside the repository to `../cinema-v3/frames/{ru,en}`. Encode them using ffmpeg at 60 fps, H.264 CRF 17, yuv420p and faststart. The final assets are `assets/resume-story-{ru,en}.mp4` and matching posters. Run `python tools/sound-film.py` (NumPy required) to produce `../cinema-v3/sound.wav` and mux it into both movies. The film includes original synthesized sound accents and a sparse electronic score, with no voice narration. The earlier renderers remain as studies.
 
 GitHub Pages requires no build step.
+
+The native page and dialog scroll rails are hidden while scrolling remains available. Scroll chapters use quiet numbered stage markers instead of progress bars. The introduction has one main case-film action; GitHub remains in the contact links. Continuous backgrounds, a transparent skill ribbon, heading reveals and monotone scene interpolation connect sections.

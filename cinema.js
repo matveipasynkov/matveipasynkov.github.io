@@ -4,8 +4,7 @@
   const film = document.querySelector('.scroll-film');
   const stage = film.querySelector('.film-stage');
   const shots = [...film.querySelectorAll('.film-shot')];
-  const meter = film.querySelector('.film-meter i');
-  const percent = film.querySelector('.film-percent');
+  const steps = [...film.querySelectorAll('.scene-steps span')];
   const rings = [...film.querySelectorAll('.film-ring')];
   const points = film.querySelector('.film-points');
   const grid = film.querySelector('.film-grid');
@@ -51,9 +50,8 @@
       points.style.transform = `rotate(${p*260}deg)`;
       grid.style.transform = `perspective(700px) rotateX(${65-p*40}deg) rotateZ(${-12+p*24}deg) scale(${1+p*.3})`;
     }
-    meter.style.transform = `scaleX(${p})`;
-    const number = String(Math.round(p*100)).padStart(2,'0');
-    if (percent.textContent !== number) percent.textContent = number;
+    const current = visibility.indexOf(Math.max(...visibility));
+    steps.forEach((step,i) => step.classList.toggle('is-active',i===current));
   }
   function schedule() { if (!frame) frame=requestAnimationFrame(draw); }
   function measure() { dirty=true; schedule(); }
