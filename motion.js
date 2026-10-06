@@ -82,17 +82,18 @@
   document.addEventListener('portfolio-scroll-frame',schedule);
   window.addEventListener('resize',()=>{geometryDirty=true;schedule();}, {passive:true});
   document.fonts?.ready.then(()=>{geometryDirty=true;schedule();});
-  new ResizeObserver(()=>{geometryDirty=true;schedule();}).observe(document.querySelector('main'));
+  new ResizeObserver(()=>{geometryDirty=true;schedule();if(readingAnchor)requestAnimationFrame(restoreReadingPosition);}).observe(document.querySelector('main'));
   document.addEventListener('visibilitychange', () => {
     root.classList.toggle('page-hidden', document.hidden);
     if (document.hidden) { cancelAnimationFrame(frame); frame=0; pending.clear(); }
     else schedule();
   });
   let readingAnchor=null;
+  window.addEventListener('hashchange',()=>{readingAnchor=null;});
   function restoreReadingPosition(){
     if(!readingAnchor)return;
     const {element,offset}=readingAnchor;
-    window.scrollTo({top:Math.max(0,element.getBoundingClientRect().top+scrollY+Math.min(offset,Math.max(0,element.offsetHeight-1))),behavior:'instant'});
+    const destination=Math.max(0,element.getBoundingClientRect().top+scrollY+Math.min(offset,Math.max(0,element.offsetHeight-1)));window.scrollTo({top:destination,behavior:'instant'});
     window.portfolioScroll?.sync();
   }
   document.addEventListener('portfolio-scene-ready',restoreReadingPosition);
@@ -102,8 +103,10 @@
     const line=document.querySelector('.header').offsetHeight;
     const sections=[...document.querySelectorAll('main>section')];
     let element=sections.find(el=>{const r=el.getBoundingClientRect();return r.height>0&&r.bottom>line+24;})||sections[0];
+    const inline=[...document.querySelectorAll('.inline-world')].find(el=>{const r=el.getBoundingClientRect();return r.top<=line+100&&r.bottom>line+24;});
+    if(inline)element=inline;
     let offset=scrollY-(element.getBoundingClientRect().top+scrollY);
-    if(element.matches('.scroll-film')){element=document.querySelector('#experience');offset=-line;}
+    if(element.matches('.scroll-film:not(.inline-world)')){element=document.querySelector('#experience');offset=-line;}
     if(element.matches('.signature-reel')){element=document.querySelector('#contact');offset=-line;}
     readingAnchor={element,offset};
     const currentAnchor=readingAnchor;
