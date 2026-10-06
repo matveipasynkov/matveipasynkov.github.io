@@ -9,6 +9,9 @@
   const pending = new Map();
   const surfaces = [...document.querySelectorAll('.process-diagram, .award-feature, .primary, .contact-title')];
   const hero = document.querySelector('.hero');
+  const flowing=[...document.querySelectorAll('.section-heading h2,.case-heading h2,.toolkit-heading h2,.about-left h2,.contact-title')];
+  flowing.forEach(el=>el.classList.add('flow-title'));
+  let flowGeometry=[],geometryDirty=true;
   try { paused = localStorage.getItem('mp-motion') === 'paused'; } catch (_) {}
   const enabled = () => !paused && !reduced.matches;
   function label() {
@@ -32,13 +35,25 @@
     if (!enabled()) {
       pending.clear(); surfaces.forEach(reset);
       hero.style.removeProperty('--hero-shift');
+      flowing.forEach(el=>el.style.removeProperty('--flow-y'));
+      root.style.removeProperty('--ambient-shift');
     }
     label(); schedule();
   }
   function render() {
     frame = 0;
     if (!enabled() || document.hidden || root.classList.contains('flat-ready')) { pending.clear(); return; }
-    hero.style.setProperty('--hero-shift', `${Math.min(window.scrollY, 650) * 0.055}px`);
+    const y=window.portfolioScroll?.read().y??scrollY;
+    hero.style.setProperty('--hero-shift', `${Math.min(y, 650) * 0.035}px`);
+    if(geometryDirty){
+      flowGeometry=flowing.map(el=>{let top=0,node=el;while(node){top+=node.offsetTop;node=node.offsetParent;}return {el,top,height:el.offsetHeight};});
+      geometryDirty=false;
+    }
+    flowGeometry.forEach(({el,top,height})=>{
+      const center=top+height*.5-y;
+      if(center>-150&&center<innerHeight+150)el.style.setProperty('--flow-y',`${Math.max(-12,Math.min(12,(center-innerHeight*.5)*.028)).toFixed(2)}px`);
+    });
+    root.style.setProperty('--ambient-shift',`${(Math.sin(y/2400)*32).toFixed(2)}px`);
     // Read geometry together before updating any surface styles.
     const positions = [...pending].map(([el, point]) => ({el, point, rect: el.getBoundingClientRect()}));
     pending.clear();
@@ -64,7 +79,10 @@
     el.addEventListener('pointercancel', () => { pending.delete(el); reset(el); });
   });
   window.addEventListener('scroll', schedule, {passive:true});
-  window.addEventListener('resize', schedule, {passive:true});
+  document.addEventListener('portfolio-scroll-frame',schedule);
+  window.addEventListener('resize',()=>{geometryDirty=true;schedule();}, {passive:true});
+  document.fonts?.ready.then(()=>{geometryDirty=true;schedule();});
+  new ResizeObserver(()=>{geometryDirty=true;schedule();}).observe(document.querySelector('main'));
   document.addEventListener('visibilitychange', () => {
     root.classList.toggle('page-hidden', document.hidden);
     if (document.hidden) { cancelAnimationFrame(frame); frame=0; pending.clear(); }
@@ -75,6 +93,7 @@
     if(!readingAnchor)return;
     const {element,offset}=readingAnchor;
     window.scrollTo({top:Math.max(0,element.getBoundingClientRect().top+scrollY+Math.min(offset,Math.max(0,element.offsetHeight-1))),behavior:'instant'});
+    window.portfolioScroll?.sync();
   }
   document.addEventListener('portfolio-scene-ready',restoreReadingPosition);
   window.addEventListener('wheel',()=>{readingAnchor=null;},{passive:true});
@@ -96,7 +115,7 @@
   });
   reduced.addEventListener('change', apply);
   pointer.addEventListener('change', () => { pending.clear(); surfaces.forEach(reset); });
-  new MutationObserver(label).observe(root, {attributes:true,attributeFilter:['lang']});
+  new MutationObserver(()=>{label();geometryDirty=true;schedule();}).observe(root, {attributes:true,attributeFilter:['lang']});
   if ('IntersectionObserver' in window) {
     const reveal = new IntersectionObserver(entries => {
       entries.forEach(entry => {

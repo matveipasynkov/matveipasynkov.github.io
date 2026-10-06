@@ -22,8 +22,14 @@ The film shows the proposal-builder case: manual preparation, client data, recom
 
 `studio/film.js` renders Three.js objects with antialiasing, then draws sharp text in a separate 2560×1440 canvas. There is no global blur or bloom. Every frame is exported deterministically at 60 fps, independent of real-time browser performance.
 
-To render: run `python studio/server.py`, open `http://127.0.0.1:8765/studio/`, select a language and click **Экспорт кадров**. JPEG frames are written outside the repository to `../cinema-v3/frames/{ru,en}`. Encode them using ffmpeg at 60 fps, H.264 CRF 17, yuv420p and faststart. The final assets are `assets/resume-story-{ru,en}.mp4` and matching posters. Run `python tools/sound-film.py` (NumPy required) to produce `../cinema-v3/sound.wav` and mux it into both movies. The film includes original synthesized sound accents and a sparse electronic score, with no voice narration. The earlier renderers remain as studies.
+To render: run `python studio/server.py`, open `http://127.0.0.1:8765/studio/`, select a language and click **Экспорт кадров**. Lossless PNG frames are written outside the repository to `../cinema-v4/frames/{ru,en}`. Encode them using ffmpeg at 60 fps, H.264 CRF 15, yuv420p and faststart. The final assets are `assets/resume-story-{ru,en}.mp4` and matching posters. Run `python tools/sound-film.py` (NumPy required) to produce `../cinema-v4/sound.wav` and mux it into both movies. The film includes original synthesized sound accents and a sparse electronic score, with no voice narration. The earlier renderers remain as studies.
 
 GitHub Pages requires no build step.
 
 The native page and dialog scroll rails are hidden while scrolling remains available. Scroll chapters use quiet numbered stage markers instead of progress bars. The introduction has one main case-film action; GitHub remains in the contact links. Continuous backgrounds, a transparent skill ribbon, heading reveals and monotone scene interpolation connect sections.
+
+All scroll-driven elements use `scroll-timeline.js`, a shared smoothed clock. Native wheel, touch and keyboard scrolling remain available. Section titles have restrained depth movement without scaling type. The clock synchronizes after restoring the reading position when animation is toggled.
+
+The film loads Manrope Latin and Cyrillic before creating any textures. Headline widths are measured once with consistent line spacing, and complete glyphs fade into position without clipping. The camera uses bounded Hermite interpolation; rigid cards keep continuous position and scale, including hidden cards. Lettering changes only while a wipe fully covers the frame. The export status reports typography QA, and every final movie contains 1,680 deterministic frames.
+
+The v4 3D pass renders at 3840×2160 before high-quality downsampling into the 1440p film. A studio HDRI, brushed anisotropic metal, rounded machined edges, face insets and physical paper surfaces replace flat generic shading. Presentation labels use Manrope; decorative signature slogans and scroll instructions were removed.

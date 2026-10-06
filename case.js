@@ -11,12 +11,12 @@
   frame=0;
   if(document.hidden||!active||root.dataset.motion!=='on'||reduced.matches||root.classList.contains('flat-ready'))return;
   if(dirty){start=reel.getBoundingClientRect().top+scrollY-(parseFloat(getComputedStyle(screen).top)||0);travel=Math.max(1,reel.offsetHeight-screen.offsetHeight);dirty=false;previous=-1}
-  const p=clamp((scrollY-start)/travel);if(p===previous)return;previous=p;
-  const a=smooth((p-.22)/.14),b=smooth((p-.62)/.14),opacity=[1-a,a*(1-b),b];
+  const p=clamp(((window.portfolioScroll?.read().y??scrollY)-start)/travel);if(p===previous)return;previous=p;
+  const a=smooth((p-.22)/.14),b=smooth((p-.62)/.14),opacity=[1-smooth(a*2),smooth((a-.5)*2)*(1-smooth(b*2)),smooth((b-.5)*2)];
   shots.forEach((el,i)=>{
    const enter=i===0?1:i===1?a:b,leave=i===0?a:i===1?b:0;
    el.style.opacity=opacity[i];el.style.visibility=opacity[i]<.002?'hidden':'visible';
-   el.style.transform=`translate3d(${leave*-7}%,${(1-enter)*45}px,0) scale(${1+(1-enter)*.08-leave*.12})`;
+   el.style.transform=`translate3d(0,${(1-enter)*28-leave*28}px,0)`;
   });
   nodes.forEach((el,i)=>{const q=smooth((p-.34-i*.055)/.09);el.style.opacity=.2+.8*q;el.style.transform=`translateX(${(1-q)*12}px)`});
   scan.style.transform=`translateX(${p*110-5}%)`;
@@ -26,6 +26,7 @@
  function schedule(){if(!frame)frame=requestAnimationFrame(draw)}
  function measure(){dirty=true;schedule()}
  addEventListener('scroll',schedule,{passive:true});addEventListener('resize',measure,{passive:true});
+ document.addEventListener('portfolio-scroll-frame',schedule);
  document.addEventListener('visibilitychange',measure);reduced.addEventListener('change',measure);
  new MutationObserver(measure).observe(root,{attributes:true,attributeFilter:['data-motion','lang']});
  if('IntersectionObserver'in window)new IntersectionObserver(entries=>{active=entries[0].isIntersecting;if(active)measure()},{rootMargin:'150px'}).observe(reel);

@@ -11,7 +11,7 @@
   const system = film.querySelector('.film-system');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const mobile = matchMedia('(max-width: 780px)');
-  let frame = 0, active = true, dirty = true, start = 0, travel = 1, last = -1, renderY = scrollY, lastTime = 0;
+  let frame = 0, active = true, dirty = true, start = 0, travel = 1, last = -1, renderY = scrollY;
   const clamp = n => Math.max(0, Math.min(1, n));
   const ease = n => { n = clamp(n); return n*n*(3-2*n); };
   function draw(time=0) {
@@ -23,20 +23,17 @@
       dirty = false; last = -1;
     }
     const legacy=mobile.matches||root.classList.contains('legacy-mobile');
-    const dt=Math.min(50,time-lastTime||16);lastTime=time;
-    if(legacy)renderY=scrollY;else renderY+=(scrollY-renderY)*(1-Math.exp(-dt/75));
-    if(Math.abs(scrollY-renderY)<.1)renderY=scrollY;
-    if(Math.abs(scrollY-renderY)>.1)schedule();
+    renderY=window.portfolioScroll?.read().y??scrollY;
     const p = clamp((renderY - start) / travel);
     if (p === last) return;
     last = p;
     const a = legacy?ease((p-.24)/.13):ease((p-.48)/.12), b = legacy?ease((p-.61)/.13):ease((p-.83)/.1);
-    const visibility = [1-a, a*(1-b), b];
+    const visibility = [1-ease(a*2), ease((a-.5)*2)*(1-ease(b*2)), ease((b-.5)*2)];
     shots.forEach((shot,i) => {
       const entering = i===0 ? 1 : i===1 ? a : b;
       const leaving = i===0 ? a : i===1 ? b : 0;
       shot.style.opacity = visibility[i];
-      shot.style.transform = root.classList.contains('flat-ready') ? 'none' : `translate3d(0,${(1-entering)*80-leaving*95}px,0) scale(${1+(1-entering)*.09-leaving*.09})`;
+      shot.style.transform = root.classList.contains('flat-ready') ? 'none' : `translate3d(0,${(1-entering)*30-leaving*30}px,0)`;
       shot.style.visibility = visibility[i] < .002 ? 'hidden' : 'visible';
     });
     const lightweight=root.classList.contains('flat-ready');
@@ -64,6 +61,7 @@
     resize.observe(film); resize.observe(stage);
   }
   addEventListener('scroll',schedule,{passive:true});
+  document.addEventListener('portfolio-scroll-frame',schedule);
   addEventListener('resize',measure,{passive:true});
   document.addEventListener('visibilitychange',measure);
   reduced.addEventListener('change',measure);

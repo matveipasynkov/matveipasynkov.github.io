@@ -89,12 +89,12 @@ function start(){
    state(0,0,heroX,heroY,heroSize,1,0),
    state(top('.scroll-film'),.2,.5,.55,1,.32,.45),
    state(top('.scroll-film')+filmTravel*.65,1,.5,.55,1.1,.3,1.4),
-   state(top('#experience')-innerHeight*.2,1.15,.83,.55,.68,.18,1.8),
+   state(top('#experience')-innerHeight*.2,1.15,.83,.55,.68,.08,1.8),
    state(top('.case-reel')-86,0,.78,.55,.78,1,2.1),
    state(top('.case-reel')-86+travel*.48,1,.78,.55,.85,1,2.6),
    state(top('.case-reel')-86+travel*.84,2,.78,.55,.78,1,3.1),
-   state(top('.toolkit')-innerHeight*.25,2,.8,.58,.7,.22,3.6),
-   state(top('#about')-innerHeight*.2,2.3,.82,.55,.75,.2,4.1),
+   state(top('.toolkit')-innerHeight*.25,2,.8,.58,.7,.08,3.6),
+   state(top('#about')-innerHeight*.2,2.3,.82,.55,.75,.08,4.1),
    state(top('.signature-reel')-innerHeight*.7,2.5,.65,.55,.85,.45,4.8),
    state(top('.signature-reel')-86,2.65,.5,.55,1,1,5.1),
    state(signatureStart+signatureDistance*.72,3,.5,.5,1,1,Math.PI*2),
@@ -117,8 +117,8 @@ function start(){
  }
  function draw(time=0){
   frame=0;if(document.hidden||lost||(root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;
-  if(light()&&time-lastTime<30){frame=requestAnimationFrame(draw);return}const dt=Math.min(50,time-lastTime||16);lastTime=time;
-  renderY+=(scrollY-renderY)*(1-Math.exp(-dt/75));if(Math.abs(scrollY-renderY)<.1)renderY=scrollY;
+  if(light()&&time-lastTime<30){frame=requestAnimationFrame(draw);return}lastTime=time;
+  renderY=window.portfolioScroll?.read().y??scrollY;
   if(dirty)measure();
   let index=0;
   while(index<anchors.length-2&&renderY>anchors[index+1].at)index++;
@@ -227,11 +227,10 @@ dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.scale.set(
   }
   for(const column of draftColumns)column.needsUpdate=true;
   blocks.instanceMatrix.needsUpdate=true;seams.instanceMatrix.needsUpdate=true;insets.instanceMatrix.needsUpdate=true;panels.instanceMatrix.needsUpdate=true;bolts.instanceMatrix.needsUpdate=true;renderer.render(scene,camera);
-  if(Math.abs(scrollY-renderY)>.1)schedule();
  }
  function schedule(){if((root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;if(!frame&&!lost)frame=requestAnimationFrame(draw)}
  function resize(){dirty=true;renderY=scrollY;renderer.setPixelRatio(Math.min(devicePixelRatio,light()?1.25:1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!light();bolts.visible=!light();camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();schedule()}
- addEventListener('scroll',schedule,{passive:true});addEventListener('resize',resize,{passive:true});
+ document.addEventListener('portfolio-scroll-frame',schedule);addEventListener('scroll',schedule,{passive:true});addEventListener('resize',resize,{passive:true});
  addEventListener('pointermove',e=>{if(light()||root.dataset.motion!=='on'||reduced.matches)return;px=e.clientX/innerWidth-.5;py=e.clientY/innerHeight-.5;schedule()},{passive:true});
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0}else resize()});
  new MutationObserver(resize).observe(root,{attributes:true,attributeFilter:['data-motion','lang']});
