@@ -5,7 +5,7 @@ function selectScene(){
  root.classList.toggle('legacy-mobile',compact.matches);
  if(compact.matches){root.classList.remove('webgl-ready');return;}
  if(root.dataset.motion!=='on')return;
- desktopScene ||= import('./world.js?v=pulse-8');
+ desktopScene ||= import('./world.js?v=worlds-10');
  desktopScene.then(()=>{
   if(!compact.matches)root.classList.add('webgl-ready');
   document.dispatchEvent(new Event('portfolio-scene-ready'));

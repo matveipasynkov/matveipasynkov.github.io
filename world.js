@@ -78,7 +78,7 @@ function start(){
  const release=()=>{targetPressure=0;interaction.classList.remove('is-held');schedule();};
  const canInteract=()=>!light()&&!reduced.matches&&root.dataset.motion==='on'&&scrollY<innerHeight*.7&&!root.classList.contains('flat-ready');
  interaction.setAttribute('role','button');interaction.tabIndex=0;
- const originalLabel=interaction.getAttribute('aria-label');const label=()=>{const enabled=canInteract();interaction.tabIndex=enabled?0:-1;if(enabled)interaction.setAttribute('role','button');else interaction.removeAttribute('role');interaction.setAttribute('aria-label',enabled?(root.lang==='en'?'Interactive cube. Hold to unfold; release to reassemble. Enter toggles the shape.':'Интерактивный куб. Удерживайте, чтобы раскрыть; отпустите, чтобы собрать. Enter переключает форму.'):originalLabel);};label();
+ const label=()=>{interaction.tabIndex=light()?-1:0;interaction.setAttribute('role','button');interaction.setAttribute('aria-label',root.lang==='en'?'Explore processes, data and impact. Click or hold and release the cube.':'Открыть процессы, данные и результат. Нажмите на куб или удерживайте и отпустите.');};label();
  interaction.addEventListener('pointerenter',()=>{if(canInteract()){targetHover=1;schedule();}});
  interaction.addEventListener('pointerleave',()=>{targetHover=0;release();});
  interaction.addEventListener('pointerdown',event=>{if(event.button!==0||!canInteract())return;targetPressure=1;pressure=Math.max(pressure,.16);interaction.classList.add('is-held');interaction.setPointerCapture(event.pointerId);schedule();});
@@ -134,7 +134,7 @@ function start(){
   return (2*t**3-3*t**2+1)*a[key]+(t**3-2*t**2+t)*h*m0+(-2*t**3+3*t**2)*b[key]+(t**3-t**2)*h*m1;
  }
  function draw(time=0){
-  frame=0;if(document.hidden||lost||(root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;
+  frame=0;if(root.dataset.explorer==='open'||document.hidden||lost||(root.classList.contains('flat-ready')||root.classList.contains('legacy-mobile')))return;
   const dt=Math.min(50,time-lastTime||16);lastTime=time;const began=performance.now();
   const follow=1-Math.exp(-dt/80);px=lerp(px,targetPx,follow);py=lerp(py,targetPy,follow);hover=lerp(hover,targetHover,1-Math.exp(-dt/120));pressure=lerp(pressure,targetPressure,1-Math.exp(-dt/(targetPressure?460:240)));
   renderY=window.portfolioScroll?.read().y??scrollY;
@@ -259,6 +259,7 @@ dummy.position.copy(p.position);dummy.rotation.copy(p.rotation);dummy.scale.set(
  function resize(){dirty=true;renderY=scrollY;renderer.setPixelRatio(Math.min(devicePixelRatio,light()?1.25:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;bolts.visible=!light();camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();schedule()}
  document.addEventListener('portfolio-scroll-frame',event=>{if(frame){cancelAnimationFrame(frame);frame=0;}if(scrollY>innerHeight*.7){targetPressure=0;targetHover=0;}draw(event.detail.time);});addEventListener('resize',resize,{passive:true});
  addEventListener('pointermove',e=>{if(light()||root.dataset.motion!=='on'||reduced.matches)return;targetPx=e.clientX/innerWidth-.5;targetPy=e.clientY/innerHeight-.5;schedule()},{passive:true});
+ document.addEventListener('portfolio-explorer-close',()=>{pressure=targetPressure=hover=targetHover=0;resize();});
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0}else resize()});
  new MutationObserver(()=>{label();if(root.dataset.motion!=='on'){pressure=targetPressure=hover=targetHover=0;}resize();}).observe(root,{attributes:true,attributeFilter:['data-motion','lang']});
  reduced.addEventListener('change',resize);coarse.addEventListener('change',resize);
